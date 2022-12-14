@@ -109,7 +109,6 @@ class PriceRepositoryTest extends MySqlTestContainer {
                 .cryptocurrencyId(null)
                 .lastUpdate(LocalDateTime.now())
                 .build();
-
         //when//then
         assertThatThrownBy(() -> priceRepository.save(underTest))
                 .hasCauseInstanceOf(PropertyValueException.class);
