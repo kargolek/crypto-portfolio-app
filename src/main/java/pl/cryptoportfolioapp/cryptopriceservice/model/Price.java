@@ -7,7 +7,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity(name = "Price")
-@Table(name = "price")
+@Table(name = "price", uniqueConstraints = @UniqueConstraint(
+        name = "UniqueCryptocurrency",
+        columnNames = "cryptocurrency_id")
+)
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -22,7 +25,7 @@ public class Price {
 
     @OneToOne
     @JoinColumn(name = "cryptocurrency_id", nullable = false)
-    private Cryptocurrency cryptocurrencyId;
+    private Cryptocurrency cryptocurrency;
 
     @Column(name = "price_current", nullable = false)
     private BigDecimal priceCurrent;
@@ -47,4 +50,5 @@ public class Price {
 
     @Column(name = "last_update", nullable = false)
     private LocalDateTime lastUpdate;
+
 }
