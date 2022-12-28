@@ -7,15 +7,16 @@ import java.time.LocalDateTime;
 
 @Entity(name = "Cryptocurrency")
 @Table(name = "cryptocurrency", uniqueConstraints = {
-        @UniqueConstraint(name = "UniqueCoinMarketCapId", columnNames = "coin_market_id")
+        @UniqueConstraint(name = "UniqueCoinMarketCapId", columnNames = "coin_market_id"),
+        @UniqueConstraint(name = "UniqueName", columnNames = "name")
 })
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
-@ToString
 public class Cryptocurrency {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -32,5 +33,8 @@ public class Cryptocurrency {
 
     @Column(name = "last_update", nullable = false)
     private LocalDateTime lastUpdate;
+
+    @OneToOne(mappedBy = "cryptocurrency", cascade = CascadeType.ALL)
+    private Price price;
 
 }

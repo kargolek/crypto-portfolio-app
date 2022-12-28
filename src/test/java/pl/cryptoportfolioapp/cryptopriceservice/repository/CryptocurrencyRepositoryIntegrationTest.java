@@ -1,0 +1,106 @@
+package pl.cryptoportfolioapp.cryptopriceservice.repository;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Example;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
+import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
+
+    @Autowired
+    private CryptocurrencyRepository underTestRepository;
+
+    private Cryptocurrency cryptocurrency;
+
+    @BeforeEach
+    public void setup() {
+        cryptocurrency = Cryptocurrency.builder()
+                .name("Bitcoin")
+                .symbol("BTC")
+                .coinMarketId(RandomUtils.nextLong())
+                .lastUpdate(LocalDateTime.now())
+                .build();
+    }
+
+    @Test
+    void whenSaveCryptocurrencyEntity_thenEntityShouldExist() {
+        var crypto = underTestRepository.save(cryptocurrency);
+
+        var expected = underTestRepository.findOne(Example.of(crypto));
+
+        assertThat(expected)
+                .get()
+                .extracting(
+                        Cryptocurrency::getId,
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol,
+                        Cryptocurrency::getCoinMarketId,
+                        Cryptocurrency::getPrice
+                ).containsExactly(
+                        cryptocurrency.getId(),
+                        cryptocurrency.getName(),
+                        cryptocurrency.getSymbol(),
+                        cryptocurrency.getCoinMarketId(),
+                        cryptocurrency.getPrice()
+                );
+    }
+
+    @Test
+    void shouldReturnEntityById() {
+        underTestRepository.save(cryptocurrency);
+
+        var expected = underTestRepository.findById(cryptocurrency.getId());
+
+        assertThat(expected.isPresent()).isTrue();
+    }
+
+    @Test
+    void whenDeleteEntity_thenEntityShouldBeDeleted() {
+        underTestRepository.save(cryptocurrency);
+
+        underTestRepository.delete(cryptocurrency);
+
+        assertThat(underTestRepository.findById(cryptocurrency.getId()).isPresent())
+                .isFalse();
+    }
+
+    @Test
+    void whenSaveCryptocurrencyWithSameCoinMarketId_thenThrowConstraintExc() {
+        underTestRepository.save(cryptocurrency);
+        var cryptoGiven = Cryptocurrency.builder()
+                .name("Ethereum")
+                .symbol("ETH")
+                .coinMarketId(cryptocurrency.getCoinMarketId())
+                .lastUpdate(LocalDateTime.now())
+                .build();
+
+        assertThatThrownBy(() -> underTestRepository.save(cryptoGiven))
+                .hasCauseInstanceOf(ConstraintViolationException.class)
+                .hasMessageContaining("cryptocurrency.UniqueCoinMarketCapId");
+    }
+
+    @Test
+    void whenFindByNameCryptocurrency_thenShouldReturnOptionalEntity(){
+        underTestRepository.save(cryptocurrency);
+
+        var expected = underTestRepository.findByName("bitcoin");
+
+        assertThat(expected.isPresent()).isTrue();
+    }
+}
