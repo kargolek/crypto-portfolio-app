@@ -16,7 +16,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CryptocurrencyServiceUnitTest {
@@ -42,7 +43,7 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldSaveCryptocurrency() {
+    void whenAddCryptoCurrency_thenReturnEntity() {
         when(cryptocurrencyRepository.save(cryptocurrency))
                 .thenReturn(cryptocurrency);
 
@@ -65,7 +66,7 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldReturnAllCryptocurrencies() {
+    void whenGetAllCryptocurrencies_thenReturnListCryptocurrencies() {
         when(cryptocurrencyRepository.findAll())
                 .thenReturn(Collections.singletonList(cryptocurrency));
 
@@ -86,7 +87,7 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldReturnCryptocurrencyById() {
+    void whenGetCryptocurrencyById_thenReturnExpectedCryptocurrency() {
         when(cryptocurrencyRepository.findById(1L))
                 .thenReturn(Optional.of(cryptocurrency));
 
@@ -109,18 +110,18 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenNoCryptocurrencyFindById() {
+    void whenGetCryptocurrencyByNotExistId_thenThrowCryptocurrencyNotFoundExc() {
         var id = 1L;
         when(cryptocurrencyRepository.findById(id))
                 .thenThrow(new CryptocurrencyNotFoundException(id));
 
         assertThatThrownBy(() -> underTestService.getById(id))
-                .hasMessage("Unable to find cryptocurrency with id: " + id)
-                .isInstanceOf(CryptocurrencyNotFoundException.class);
+                .isInstanceOf(CryptocurrencyNotFoundException.class)
+                .hasMessage("Unable to find cryptocurrency with id: " + id);
     }
 
     @Test
-    void shouldUpdateCryptocurrencyById() {
+    void whenUpdateCryptocurrency_thenShouldUpdateProperValuesOfEntity() {
         var cryptoCurrencyUpdate = Cryptocurrency.builder()
                 .name("Ethereum")
                 .symbol("ETH")
@@ -134,25 +135,28 @@ class CryptocurrencyServiceUnitTest {
         var expected = underTestService.updateCryptocurrency(1L, cryptoCurrencyUpdate);
 
         assertThat(expected)
-                .extracting(Cryptocurrency::getName,
-                        Cryptocurrency::getSymbol)
+                .extracting(
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol
+                )
                 .containsExactly("Ethereum", "ETH");
     }
 
     @Test
-    void shouldNotUpdateAndThrowException() {
+    void whenNotUpdateCryptoById_thenThrowCryptocurrencyNotFoundExc() {
         var cryptoCurrencyUpdate = Cryptocurrency.builder()
                 .name("Ethereum")
                 .symbol("ETH")
                 .coinMarketId(RandomUtils.nextLong())
-                .lastUpdate(LocalDateTime.now())
                 .build();
 
-        assertThatThrownBy(() -> underTestService.updateCryptocurrency(1L, cryptoCurrencyUpdate));
+        assertThatThrownBy(() -> underTestService.updateCryptocurrency(1L, cryptoCurrencyUpdate))
+                .isInstanceOf(CryptocurrencyNotFoundException.class)
+                .hasMessage("Unable to find cryptocurrency with id: 1");
     }
 
     @Test
-    void shouldDeleteCryptocurrencyById() {
+    void whenDeleteCryptocurrencyById_thenDeleteByIdRepositoryMethodPerform() {
         var id = 1L;
 
         underTestService.deleteCryptocurrency(id);
@@ -161,7 +165,7 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldFindByName() {
+    void whenGetCryptocurrencyByName_thenReturnCryptocurrencySuccessful() {
         var cryptoName = "Bitcoin";
         when(cryptocurrencyRepository.findByName(cryptoName))
                 .thenReturn(Optional.of(cryptocurrency));
@@ -185,16 +189,14 @@ class CryptocurrencyServiceUnitTest {
     }
 
     @Test
-    void shouldNotFindByNameThrowException() {
+    void whenNotFoundCryptocurrencyByName_thenThrowCryptocurrencyNotFoundExc() {
         var cryptoName = "Ethereum";
 
         when(cryptocurrencyRepository.findByName(cryptoName))
                 .thenThrow(new CryptocurrencyNotFoundException(cryptoName));
 
         assertThatThrownBy(() -> underTestService.getByName(cryptoName))
-                .hasMessage("Unable to find cryptocurrency with name: " + cryptoName)
-                .isInstanceOf(CryptocurrencyNotFoundException.class);
+                .isInstanceOf(CryptocurrencyNotFoundException.class)
+                .hasMessage("Unable to find cryptocurrency with name: " + cryptoName);
     }
-
-
 }

@@ -142,7 +142,7 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
     }
 
     @Test
-    void whenSavePriceEntityWithNullPriceCurrent_thenShouldThrowPropertyException() {
+    void whenSavePriceEntityWithNullPriceCurrent_thenShouldShouldSave() {
         cryptoRepository.save(cryptocurrency);
 
         var priceGiven = Price.builder()
@@ -157,8 +157,10 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        assertThatThrownBy(() -> underTestRepository.save(priceGiven))
-                .hasCauseInstanceOf(PropertyValueException.class);
+        var expected = underTestRepository.save(priceGiven);
+
+        assertThat(expected)
+                .isIn(underTestRepository.findAll());
     }
 
     @Test
@@ -266,5 +268,4 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
                         )
                 );
     }
-
 }

@@ -27,7 +27,7 @@ public class Price {
     @JoinColumn(name = "cryptocurrency_id", nullable = false)
     private Cryptocurrency cryptocurrency;
 
-    @Column(name = "price_current", nullable = false)
+    @Column(name = "price_current",precision = 24, scale = 12)
     private BigDecimal priceCurrent;
 
     @Column(name = "percent_change_1h")

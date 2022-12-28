@@ -1,19 +1,20 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Example;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
+import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
+import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -26,9 +27,12 @@ import static org.assertj.core.api.Assertions.*;
 public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
 
     @Autowired
-    private CryptocurrencyService cryptocurrencyService;
+    private CryptocurrencyService underTestService;
     @Autowired
     private CryptocurrencyRepository cryptocurrencyRepository;
+
+    @Autowired
+    private PriceRepository priceRepository;
 
     private Cryptocurrency cryptocurrency;
 
@@ -40,28 +44,31 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .coinMarketId(RandomUtils.nextLong())
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-
-        System.out.printf("DB size: %d%n", cryptocurrencyRepository.findAll().size());
     }
 
     @Test
     void whenAddCryptocurrency_thenShouldSaveSuccessful() {
-        var underTest = cryptocurrencyService.addCryptocurrency(cryptocurrency);
-        cryptocurrencyRepository.findOne(Example.of(underTest))
-                .ifPresent(crypto -> {
-                    assertThat(underTest.getName())
-                            .isEqualTo(crypto.getName());
-                    assertThat(underTest.getSymbol())
-                            .isEqualTo(crypto.getSymbol());
-                    assertThat(underTest.getCoinMarketId())
-                            .isEqualTo(crypto.getCoinMarketId());
-                    assertThat(underTest.getLastUpdate())
-                            .isEqualToIgnoringNanos(crypto.getLastUpdate());
-                });
+        var expected = underTestService.addCryptocurrency(cryptocurrency);
+        assertThat(cryptocurrencyRepository.findAll())
+                .extracting(
+                        Cryptocurrency::getId,
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol,
+                        Cryptocurrency::getCoinMarketId,
+                        Cryptocurrency::getLastUpdate
+                ).containsExactly(
+                        tuple(
+                                expected.getId(),
+                                expected.getName(),
+                                expected.getSymbol(),
+                                expected.getCoinMarketId(),
+                                expected.getLastUpdate()
+                        )
+                );
     }
 
     @Test
-    void whenAddCryptoWithTheSameCoinMarketId_thenShouldThrowDataIntegrityException() {
+    void whenAddCryptoWithTheSameCoinMarketId_thenShouldThrowConstraintViolation() {
         var coinMarketIdRandom = RandomUtils.nextLong();
         var crypto = Cryptocurrency.builder()
                 .name("Ethereum")
@@ -76,10 +83,10 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .coinMarketId(coinMarketIdRandom)
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        cryptocurrencyService.addCryptocurrency(crypto);
+        underTestService.addCryptocurrency(crypto);
 
-        assertThatThrownBy(() -> cryptocurrencyService.addCryptocurrency(crypto2))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> underTestService.addCryptocurrency(crypto2))
+                .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 
     @Test
@@ -98,10 +105,10 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .coinMarketId(2L)
                 .build();
 
-        var cryptoUpdated =
-                cryptocurrencyService.updateCryptocurrency(cryptoToUpdate.getId(), cryptoUpdate);
+        var expected =
+                underTestService.updateCryptocurrency(cryptoToUpdate.getId(), cryptoUpdate);
 
-        assertThat(cryptoUpdated)
+        assertThat(expected)
                 .extracting(
                         Cryptocurrency::getId,
                         Cryptocurrency::getName,
@@ -129,7 +136,7 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
         var searchedId = cryptoToUpdate.getId() + 10L;
 
         assertThatThrownBy(() ->
-                cryptocurrencyService.updateCryptocurrency(
+                underTestService.updateCryptocurrency(
                         searchedId,
                         cryptoUpdate))
                 .isInstanceOf(CryptocurrencyNotFoundException.class)
@@ -146,7 +153,7 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .build();
         var id = cryptocurrencyRepository.save(crypto).getId();
 
-        cryptocurrencyService.deleteCryptocurrency(id);
+        underTestService.deleteCryptocurrency(id);
 
         assertThat(cryptocurrencyRepository.findAll())
                 .extracting(
@@ -167,9 +174,9 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .build();
         var cryptoSaved = cryptocurrencyRepository.save(crypto);
 
-        var underTest = cryptocurrencyService.getByName("Ethereum");
+        var expected = underTestService.getByName("Ethereum");
 
-        assertThat(underTest)
+        assertThat(expected)
                 .extracting(
                         Cryptocurrency::getId,
                         Cryptocurrency::getName,
@@ -178,5 +185,21 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 ).containsExactly(cryptoSaved.getId(), "Ethereum", "ETH", 1L);
     }
 
+    @Test
+    void whenSaveCryptocurrencyEntity_thenPriceEntityShouldSaveAlso() {
+        underTestService.addCryptocurrency(cryptocurrency);
 
+        assertThat(priceRepository.findAll())
+                .hasSize(1)
+                .extracting(
+                        Price::getId,
+                        Price::getPriceCurrent,
+                        Price::getPercentChange1h,
+                        Price::getCryptocurrency
+                ).containsExactly(
+                        tuple(
+                                cryptocurrency.getPrice().getId(), null, null, cryptocurrency
+                        )
+                );
+    }
 }

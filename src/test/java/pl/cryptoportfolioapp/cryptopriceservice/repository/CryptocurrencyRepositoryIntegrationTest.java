@@ -72,11 +72,10 @@ class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
 
     @Test
     void whenDeleteEntity_thenEntityShouldBeDeleted() {
-        //given
         underTestRepository.save(cryptocurrency);
-        //when
+
         underTestRepository.delete(cryptocurrency);
-        //then
+
         assertThat(underTestRepository.findById(cryptocurrency.getId()).isPresent())
                 .isFalse();
     }
@@ -104,6 +103,4 @@ class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
 
         assertThat(expected.isPresent()).isTrue();
     }
-
-
 }
