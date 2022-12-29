@@ -63,8 +63,7 @@ public class CryptocurrencyService {
         cryptocurrencyRepository.deleteById(id);
     }
 
-    public Cryptocurrency getByName(String name) {
-        return cryptocurrencyRepository.findByName(name)
-                .orElseThrow(() -> new CryptocurrencyNotFoundException(name));
+    public List<Cryptocurrency> getByName(List<String> name) {
+        return cryptocurrencyRepository.findByName(name);
     }
 }

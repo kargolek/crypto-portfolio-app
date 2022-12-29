@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -25,6 +26,7 @@ public class Price {
 
     @OneToOne
     @JoinColumn(name = "cryptocurrency_id", nullable = false)
+    @JsonBackReference
     private Cryptocurrency cryptocurrency;
 
     @Column(name = "price_current",precision = 24, scale = 12)

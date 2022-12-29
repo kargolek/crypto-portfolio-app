@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
@@ -18,6 +19,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -165,6 +167,21 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
     }
 
     @Test
+    void whenDeleteByIdNotExisted_thenThrowEmptyResultDataAccessExc() {
+        var crypto = Cryptocurrency.builder()
+                .name("Ethereum")
+                .symbol("ETH")
+                .coinMarketId(1L)
+                .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
+        var id = cryptocurrencyRepository.save(crypto);
+
+        assertThatThrownBy(() -> underTestService.deleteCryptocurrency(100L))
+                .isInstanceOf(EmptyResultDataAccessException.class)
+                .hasMessage("No class pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency entity with id 100 exists!");
+    }
+
+    @Test
     void whenFindByName_thenFindShouldBeSuccessful() {
         var crypto = Cryptocurrency.builder()
                 .name("Ethereum")
@@ -174,7 +191,7 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                 .build();
         var cryptoSaved = cryptocurrencyRepository.save(crypto);
 
-        var expected = underTestService.getByName("Ethereum");
+        var expected = underTestService.getByName(List.of("Ethereum", "Bitcoin"));
 
         assertThat(expected)
                 .extracting(
@@ -182,7 +199,14 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                         Cryptocurrency::getName,
                         Cryptocurrency::getSymbol,
                         Cryptocurrency::getCoinMarketId
-                ).containsExactly(cryptoSaved.getId(), "Ethereum", "ETH", 1L);
+                ).containsExactly(
+                        tuple(
+                                cryptoSaved.getId(),
+                                "Ethereum",
+                                "ETH",
+                                1L
+                        )
+                );
     }
 
     @Test

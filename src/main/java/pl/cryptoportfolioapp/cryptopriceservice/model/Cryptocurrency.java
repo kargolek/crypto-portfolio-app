@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -35,6 +36,7 @@ public class Cryptocurrency {
     private LocalDateTime lastUpdate;
 
     @OneToOne(mappedBy = "cryptocurrency", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Price price;
 
 }
