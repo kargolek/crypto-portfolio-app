@@ -8,7 +8,7 @@ import org.testcontainers.junit.jupiter.Container;
 public abstract class MySqlTestContainer {
 
     @Container
-    static MySQLContainer<?> mySQLContainer = new MySQLContainer<>("mysql:8");
+    static final MySQLContainer<?> mySQLContainer = new MySQLContainer<>("mysql:8");
 
     static {
         mySQLContainer.withReuse(true);

@@ -14,9 +14,9 @@ import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
@@ -96,11 +96,25 @@ class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
     }
 
     @Test
-    void whenFindByNameCryptocurrency_thenShouldReturnOptionalEntity(){
+    void whenFindByNameCryptocurrency_thenShouldReturnListCryptocurrency() {
         underTestRepository.save(cryptocurrency);
 
-        var expected = underTestRepository.findByName("bitcoin");
+        var expected = underTestRepository.findByName(List.of("bitcoin"));
 
-        assertThat(expected.isPresent()).isTrue();
+        assertThat(expected).extracting(
+                Cryptocurrency::getId,
+                Cryptocurrency::getName,
+                Cryptocurrency::getSymbol,
+                Cryptocurrency::getCoinMarketId,
+                Cryptocurrency::getPrice
+        ).containsExactly(
+                tuple(
+                        cryptocurrency.getId(),
+                        cryptocurrency.getName(),
+                        cryptocurrency.getSymbol(),
+                        cryptocurrency.getCoinMarketId(),
+                        cryptocurrency.getPrice()
+                )
+        );
     }
 }

@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -8,7 +9,8 @@ import java.time.LocalDateTime;
 @Entity(name = "Cryptocurrency")
 @Table(name = "cryptocurrency", uniqueConstraints = {
         @UniqueConstraint(name = "UniqueCoinMarketCapId", columnNames = "coin_market_id"),
-        @UniqueConstraint(name = "UniqueName", columnNames = "name")
+        @UniqueConstraint(name = "UniqueName", columnNames = "name"),
+        @UniqueConstraint(name = "UniqueSymbol", columnNames = "symbol")
 })
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,10 +24,10 @@ public class Cryptocurrency {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "symbol", nullable = false)
+    @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
     @Column(name = "coin_market_id", nullable = false)
@@ -35,6 +37,7 @@ public class Cryptocurrency {
     private LocalDateTime lastUpdate;
 
     @OneToOne(mappedBy = "cryptocurrency", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Price price;
 
 }

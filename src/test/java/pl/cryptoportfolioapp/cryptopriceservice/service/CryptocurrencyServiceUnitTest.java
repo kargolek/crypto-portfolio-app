@@ -13,6 +13,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyReposit
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -29,7 +30,6 @@ class CryptocurrencyServiceUnitTest {
     private CryptocurrencyService underTestService;
 
     private Cryptocurrency cryptocurrency;
-
 
     @BeforeEach
     public void setup() {
@@ -167,10 +167,10 @@ class CryptocurrencyServiceUnitTest {
     @Test
     void whenGetCryptocurrencyByName_thenReturnCryptocurrencySuccessful() {
         var cryptoName = "Bitcoin";
-        when(cryptocurrencyRepository.findByName(cryptoName))
-                .thenReturn(Optional.of(cryptocurrency));
+        when(cryptocurrencyRepository.findByName(List.of(cryptoName)))
+                .thenReturn(List.of(cryptocurrency));
 
-        var expected = underTestService.getByName(cryptoName);
+        var expected = underTestService.getByName(List.of(cryptoName));
 
         assertThat(expected)
                 .extracting(
@@ -180,22 +180,23 @@ class CryptocurrencyServiceUnitTest {
                         Cryptocurrency::getCoinMarketId,
                         Cryptocurrency::getLastUpdate)
                 .containsExactly(
-                        cryptocurrency.getId(),
-                        cryptocurrency.getName(),
-                        cryptocurrency.getSymbol(),
-                        cryptocurrency.getCoinMarketId(),
-                        cryptocurrency.getLastUpdate()
-                );
+                        tuple(
+                                cryptocurrency.getId(),
+                                cryptocurrency.getName(),
+                                cryptocurrency.getSymbol(),
+                                cryptocurrency.getCoinMarketId(),
+                                cryptocurrency.getLastUpdate()
+                        ));
     }
 
     @Test
     void whenNotFoundCryptocurrencyByName_thenThrowCryptocurrencyNotFoundExc() {
         var cryptoName = "Ethereum";
 
-        when(cryptocurrencyRepository.findByName(cryptoName))
+        when(cryptocurrencyRepository.findByName(List.of(cryptoName)))
                 .thenThrow(new CryptocurrencyNotFoundException(cryptoName));
 
-        assertThatThrownBy(() -> underTestService.getByName(cryptoName))
+        assertThatThrownBy(() -> underTestService.getByName(List.of(cryptoName)))
                 .isInstanceOf(CryptocurrencyNotFoundException.class)
                 .hasMessage("Unable to find cryptocurrency with name: " + cryptoName);
     }

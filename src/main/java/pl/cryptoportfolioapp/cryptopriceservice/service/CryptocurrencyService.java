@@ -34,12 +34,12 @@ public class CryptocurrencyService {
     }
 
     public List<Cryptocurrency> getCryptocurrencies() {
-        log.info("Get all cryptocurrencies from DB");
+        log.info("Finding all cryptocurrencies");
         return cryptocurrencyRepository.findAll();
     }
 
     public Cryptocurrency getById(Long id) {
-        log.info(String.format("Get cryptocurrency by id: %d", id));
+        log.info(String.format("Finding cryptocurrency by id: %d", id));
         return cryptocurrencyRepository.findById(id)
                 .orElseThrow(() -> new CryptocurrencyNotFoundException(id));
     }
@@ -63,8 +63,8 @@ public class CryptocurrencyService {
         cryptocurrencyRepository.deleteById(id);
     }
 
-    public Cryptocurrency getByName(String name) {
-        return cryptocurrencyRepository.findByName(name)
-                .orElseThrow(() -> new CryptocurrencyNotFoundException(name));
+    public List<Cryptocurrency> getByName(List<String> name) {
+        log.info(String.format("Finding cryptocurrencies by name: %s", name));
+        return cryptocurrencyRepository.findByName(name);
     }
 }
