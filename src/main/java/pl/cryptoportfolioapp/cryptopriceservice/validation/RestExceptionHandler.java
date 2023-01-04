@@ -1,7 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.validation;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -16,6 +15,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 
+import javax.validation.constraints.NotNull;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -34,19 +34,22 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .message(ex.getMessage())
                 .build();
-        log.info(String.format("Status: %s Message: %s", jsonApiError.getStatus(), jsonApiError.getMessage()));
+        log.info(String.format("Status: %s Message: %s",
+                jsonApiError.getStatus(),
+                jsonApiError.getMessage()));
         return new ResponseEntity<>(jsonApiError, jsonApiError.getStatus());
     }
 
     @ExceptionHandler(EmptyResultDataAccessException.class)
     public ResponseEntity<?> handleEmptyResultDataAccessException(EmptyResultDataAccessException ex) {
-
         var jsonApiError = JsonApiError.builder()
                 .status(HttpStatus.NOT_FOUND)
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        log.info(String.format("Status: %s Message: %s", jsonApiError.getStatus(), jsonApiError.getMessage()));
+        log.info(String.format("Status: %s Message: %s",
+                jsonApiError.getStatus(),
+                jsonApiError.getMessage()));
         return new ResponseEntity<>(jsonApiError, jsonApiError.getStatus());
     }
 
@@ -57,7 +60,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        log.info(String.format("Status: %s Message: %s", jsonApiError.getStatus(), jsonApiError.getMessage()));
+        log.info(String.format("Status: %s Message: %s",
+                jsonApiError.getStatus(),
+                jsonApiError.getMessage()));
         return new ResponseEntity<>(jsonApiError, jsonApiError.getStatus());
     }
 
@@ -73,8 +78,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .collect(Collectors.toList());
 
         var jsonApiError = JsonApiError.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Method argument are not valid")
+                .status(HttpStatus.BAD_REQUEST).message("Method argument are not valid")
                 .errors(errors)
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
