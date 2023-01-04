@@ -31,7 +31,6 @@ class CryptocurrencyServiceUnitTest {
 
     private Cryptocurrency cryptocurrency;
 
-
     @BeforeEach
     public void setup() {
         cryptocurrency = Cryptocurrency.builder()

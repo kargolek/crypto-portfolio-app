@@ -7,11 +7,12 @@ import org.springframework.stereotype.Repository;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CryptocurrencyRepository extends JpaRepository<Cryptocurrency, Long> {
-    @Query(value = "SELECT * FROM cryptocurrency WHERE name in :name", nativeQuery = true)
+    @Query(value = "SELECT * FROM cryptocurrency " +
+            "WHERE name in :name " +
+            "ORDER BY id ASC", nativeQuery = true)
     List<Cryptocurrency> findByName(@Param("name") List<String> name);
 
 }

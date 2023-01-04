@@ -29,7 +29,7 @@ public class Price {
     @JsonBackReference
     private Cryptocurrency cryptocurrency;
 
-    @Column(name = "price_current",precision = 24, scale = 12)
+    @Column(name = "price_current", precision = 24, scale = 12)
     private BigDecimal priceCurrent;
 
     @Column(name = "percent_change_1h")

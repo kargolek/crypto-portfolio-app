@@ -14,7 +14,6 @@ import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -97,7 +96,7 @@ class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
     }
 
     @Test
-    void whenFindByNameCryptocurrency_thenShouldReturnListCryptocurrency(){
+    void whenFindByNameCryptocurrency_thenShouldReturnListCryptocurrency() {
         underTestRepository.save(cryptocurrency);
 
         var expected = underTestRepository.findByName(List.of("bitcoin"));

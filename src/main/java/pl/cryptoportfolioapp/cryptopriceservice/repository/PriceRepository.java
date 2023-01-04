@@ -6,5 +6,4 @@ import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 
 @Repository
 public interface PriceRepository extends JpaRepository<Price, Long> {
-
 }

@@ -6,7 +6,7 @@ services:
     container_name: mysql_test
     restart: always
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - ./init:/docker-entrypoint-initdb.d
     environment:
@@ -24,7 +24,7 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8083:8080
+      - "8083:8080"
     depends_on:
       mysql:
         condition: service_healthy

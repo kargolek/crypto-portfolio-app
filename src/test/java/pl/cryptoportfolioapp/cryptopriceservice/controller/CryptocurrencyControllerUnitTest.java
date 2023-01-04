@@ -6,13 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDto;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.service.CryptocurrencyService;
 
@@ -24,8 +25,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -95,7 +95,23 @@ class CryptocurrencyControllerUnitTest {
         mockMvc.perform(MockMvcRequestBuilders.get(path + "/1"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isNotEmpty());
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Bitcoin"))
+                .andExpect(jsonPath("$.symbol").value("BTC"))
+                .andExpect(jsonPath("$.coinMarketId").value(1L))
+                .andExpect(jsonPath("$.price.priceCurrent").isNumber());
+    }
+
+    @Test
+    void whenGetCryptocurrencyByIdNotExisted_thenReturn404JsonError() throws Exception {
+        when(cryptocurrencyService.getById(any()))
+                .thenThrow(new CryptocurrencyNotFoundException(1L));
+
+        mockMvc.perform(MockMvcRequestBuilders.get(path + "/1"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Unable to find cryptocurrency with id: 1"));
     }
 
     @Test
@@ -111,7 +127,7 @@ class CryptocurrencyControllerUnitTest {
 
     @Test
     void whenGetCryptosByQueryName_thenReturn200JsonCryptocurrencyData() throws Exception {
-        when(cryptocurrencyService.getByName(List.of("Ethereum", "Bitcoin")))
+        when(cryptocurrencyService.getByName(List.of("Bitcoin", "Ethereum")))
                 .thenReturn(List.of(cryptocurrencyBTC, cryptocurrencyETH));
 
         mockMvc.perform(MockMvcRequestBuilders.get(path + "?name=Bitcoin,Ethereum"))
@@ -150,7 +166,6 @@ class CryptocurrencyControllerUnitTest {
                 .andExpect(jsonPath("[0].symbol").value("ETH"))
                 .andExpect(jsonPath("[0].coinMarketId").value(2L))
                 .andExpect(jsonPath("[0].price").isNotEmpty());
-        ;
     }
 
     @Test
@@ -158,7 +173,7 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDto.builder()
+        var body = CryptocurrencyDTO.builder()
                 .name("Bitcoin")
                 .symbol("BTC")
                 .coinMarketId(1L)
@@ -168,17 +183,20 @@ class CryptocurrencyControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andDo(print())
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Bitcoin"))
+                .andExpect(jsonPath("$.symbol").value("BTC"))
+                .andExpect(jsonPath("$.coinMarketId").value(1L))
+                .andExpect(jsonPath("$.price").isNotEmpty());
     }
 
     @Test
     void whenPostCryptocurrencyWithNoBodyData_thenReturn400AndJsonWithDetails() throws Exception {
-        when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
-                .thenReturn(cryptocurrencyBTC);
+        var cryptoDTO = new Cryptocurrency();
 
         mockMvc.perform(MockMvcRequestBuilders.post(path)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content(objectMapper.writeValueAsString(cryptoDTO))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
@@ -190,17 +208,19 @@ class CryptocurrencyControllerUnitTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        verify(cryptocurrencyRepository).deleteById(1L);
+        verify(cryptocurrencyService).deleteCryptocurrency(1L);
     }
 
     @Test
     void whenDeleteCryptocurrencyByIdNotExisted_thenReturn404JsonError() throws Exception {
+        doThrow(EmptyResultDataAccessException.class).when(cryptocurrencyService).deleteCryptocurrency(anyLong());
+
         mockMvc.perform(MockMvcRequestBuilders.delete(path + "/2"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"));
 
-        verify(cryptocurrencyRepository).deleteById(2L);
+        verify(cryptocurrencyService).deleteCryptocurrency(2L);
     }
 
     @Test
@@ -208,7 +228,7 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDto.builder()
+        var body = CryptocurrencyDTO.builder()
                 .name("Bitcoin")
                 .symbol("BTC")
                 .coinMarketId(1L)
@@ -224,10 +244,10 @@ class CryptocurrencyControllerUnitTest {
 
     @Test
     void whenUpdateCryptocurrencyWhenIdNotExist_thenReturn404JsonError() throws Exception {
-        when(cryptocurrencyService.updateCryptocurrency(1L, cryptocurrencyBTC))
+        when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenThrow(new CryptocurrencyNotFoundException(1L));
 
-        var body = CryptocurrencyDto.builder()
+        var body = CryptocurrencyDTO.builder()
                 .name("Bitcoin")
                 .symbol("BTC")
                 .coinMarketId(1L)

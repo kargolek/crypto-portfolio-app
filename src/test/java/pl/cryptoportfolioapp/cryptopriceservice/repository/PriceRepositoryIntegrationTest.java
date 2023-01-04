@@ -1,6 +1,5 @@
 package pl.cryptoportfolioapp.cryptopriceservice.repository;
 
-import org.hibernate.PropertyValueException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -164,7 +163,7 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
     }
 
     @Test
-    void whenSavePriceWithNullCryptocurrency_thenThrowPropertyValueExc() {
+    void whenSavePriceWithNullCryptocurrency_thenThrowExc() {
         cryptoRepository.save(cryptocurrency);
 
         var priceGiven = Price.builder()
@@ -180,7 +179,7 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
                 .build();
 
         assertThatThrownBy(() -> underTestRepository.save(priceGiven))
-                .hasCauseInstanceOf(PropertyValueException.class);
+                .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 
     @Test
@@ -219,7 +218,7 @@ class PriceRepositoryIntegrationTest extends MySqlTestContainer {
                 .build();
 
         assertThatThrownBy(() -> underTestRepository.save(priceGiven))
-                .hasCauseInstanceOf(PropertyValueException.class);
+                .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 
     @Test
