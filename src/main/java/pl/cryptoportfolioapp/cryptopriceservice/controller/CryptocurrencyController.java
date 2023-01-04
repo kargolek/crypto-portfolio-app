@@ -19,7 +19,6 @@ import java.util.Optional;
 
 @RequestMapping(path = "api/v1/cryptocurrency")
 @RestController
-@Validated
 public class CryptocurrencyController {
 
     @Autowired
