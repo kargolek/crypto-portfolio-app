@@ -1,4 +1,4 @@
-package pl.cryptoportfolioapp.cryptopriceservice.validation;
+package pl.cryptoportfolioapp.cryptopriceservice.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
+import pl.cryptoportfolioapp.cryptopriceservice.exception.JsonApiError;
 
 import javax.validation.constraints.NotNull;
 import java.sql.SQLIntegrityConstraintViolationException;

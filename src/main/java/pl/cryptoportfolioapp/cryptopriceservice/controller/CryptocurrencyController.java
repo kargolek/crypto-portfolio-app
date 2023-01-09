@@ -1,9 +1,9 @@
 package pl.cryptoportfolioapp.cryptopriceservice.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
@@ -19,6 +19,7 @@ import java.util.Optional;
 
 @RequestMapping(path = "api/v1/cryptocurrency")
 @RestController
+@Slf4j
 public class CryptocurrencyController {
 
     @Autowired
@@ -40,6 +41,7 @@ public class CryptocurrencyController {
     @PostMapping("")
     public ResponseEntity<Cryptocurrency> registerCryptocurrency(
             @Valid @RequestBody CryptocurrencyDTO cryptocurrencyDTO) {
+        log.info("COIN MARKET CAP ID: " + cryptocurrencyDTO.getCoinMarketId());
         var registerCryptocurrency = cryptocurrencyDTO.toCryptocurrency();
         var cryptocurrencyEntity = cryptocurrencyService.addCryptocurrency(registerCryptocurrency);
         return ResponseEntity.status(HttpStatus.CREATED).body(cryptocurrencyEntity);

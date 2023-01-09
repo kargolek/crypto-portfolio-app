@@ -173,11 +173,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.post(path)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -228,11 +227,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.put(path + "/" + cryptocurrencyBTC.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -247,11 +245,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenThrow(new CryptocurrencyNotFoundException(1L));
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.put(path + "/" + cryptocurrencyBTC.getId())
                         .contentType(MediaType.APPLICATION_JSON)

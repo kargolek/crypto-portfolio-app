@@ -2,6 +2,7 @@ package pl.cryptoportfolioapp.cryptopriceservice.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Accessors;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import javax.validation.constraints.Min;
@@ -10,7 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Data
-@Builder
+@Accessors(chain = true)
 public class CryptocurrencyDTO {
     @NotEmpty(message = "Name cannot be an empty")
     @Size(min = 2, max = 100, message = "Name length exceeds range [2,100]")
