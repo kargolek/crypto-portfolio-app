@@ -1,5 +1,6 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
 
 @Data
 @Accessors(chain = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PriceResponseDTO {
 
     @JsonProperty("price")

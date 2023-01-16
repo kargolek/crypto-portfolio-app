@@ -32,22 +32,22 @@ public class Price {
     @Column(name = "price_current", precision = 24, scale = 12)
     private BigDecimal priceCurrent;
 
-    @Column(name = "percent_change_1h")
+    @Column(name = "percent_change_1h", precision = 24, scale = 12)
     private BigDecimal percentChange1h;
 
-    @Column(name = "percent_change_24h")
+    @Column(name = "percent_change_24h", precision = 24, scale = 12)
     private BigDecimal percentChange24h;
 
-    @Column(name = "percent_change_7d")
+    @Column(name = "percent_change_7d", precision = 24, scale = 12)
     private BigDecimal percentChange7d;
 
-    @Column(name = "percent_change_30d")
+    @Column(name = "percent_change_30d", precision = 24, scale = 12)
     private BigDecimal percentChange30d;
 
-    @Column(name = "percent_change_60d")
+    @Column(name = "percent_change_60d", precision = 24, scale = 12)
     private BigDecimal percentChange60d;
 
-    @Column(name = "percent_change_90d")
+    @Column(name = "percent_change_90d", precision = 24, scale = 12)
     private BigDecimal percentChange90d;
 
     @Column(name = "last_update", nullable = false)
