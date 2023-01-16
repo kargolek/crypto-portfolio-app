@@ -17,6 +17,11 @@
 		<java.version>17</java.version>
 		<testcontainers.version>1.17.6</testcontainers.version>
 		<mapstruct.version>1.5.3.Final</mapstruct.version>
+		<assertj-core.version>3.24.1</assertj-core.version>
+		<commons-lang3.version>3.12.0</commons-lang3.version>
+		<okhttp.version>2.7.5</okhttp.version>
+		<okio.version>3.3.0</okio.version>
+		<mockwebserver.version>4.10.0</mockwebserver.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -68,29 +73,29 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.24.1</version>
+			<version>${assertj-core.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.12.0</version>
+			<version>${commons-lang3.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>2.7.5</version>
+			<version>${okhttp.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okio</groupId>
 			<artifactId>okio</artifactId>
-			<version>3.3.0</version>
+			<version>${okio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>mockwebserver</artifactId>
-			<version>4.10.0</version>
+			<version>${mockwebserver.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
