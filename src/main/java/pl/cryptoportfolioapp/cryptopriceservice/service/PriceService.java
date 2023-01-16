@@ -9,6 +9,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 /**
  * @author Karol Kuta-Orlowicz
@@ -20,15 +21,15 @@ public class PriceService {
 
     private PriceRepository priceRepository;
 
-    public Price update(Price price) {
-        var id = price.getId();
-        var priceToUpdate = priceRepository.findById(id)
-                .orElseThrow(() -> new PriceNotFoundException(id));
-        price.setLastUpdate(LocalDateTime.now(ZoneOffset.UTC));
-        log.info(String.format("Updating cryptocurrency price old price: %f, new price: %f cryptocurrency: %s",
-                priceToUpdate.getPriceCurrent(),
-                price.getPriceCurrent(),
-                price.getCryptocurrency().getName()));
-        return priceRepository.save(price);
+    public List<Price> updatePrices(List<Price> prices) {
+        var isPriceNotExist = prices.stream()
+                .anyMatch(price -> priceRepository.findById(price.getId()).isEmpty());
+        if (isPriceNotExist)
+            throw new PriceNotFoundException("Unable to find price entity for a new price");
+        var pricesToUpdate = prices.stream()
+                .peek(price -> price.setLastUpdate(LocalDateTime.now(ZoneOffset.UTC)))
+                .peek(price -> log.info("Updating price id:{}, new price: {}", price.getId(), price.getPriceCurrent()))
+                .toList();
+        return priceRepository.saveAll(pricesToUpdate);
     }
 }

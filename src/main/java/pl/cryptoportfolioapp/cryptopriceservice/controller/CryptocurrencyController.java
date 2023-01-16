@@ -1,11 +1,11 @@
 package pl.cryptoportfolioapp.cryptopriceservice.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.service.CryptocurrencyService;
 
@@ -19,6 +19,7 @@ import java.util.Optional;
 
 @RequestMapping(path = "api/v1/cryptocurrency")
 @RestController
+@Slf4j
 public class CryptocurrencyController {
 
     @Autowired
@@ -39,8 +40,8 @@ public class CryptocurrencyController {
 
     @PostMapping("")
     public ResponseEntity<Cryptocurrency> registerCryptocurrency(
-            @Valid @RequestBody CryptocurrencyDTO cryptocurrencyDTO) {
-        var registerCryptocurrency = cryptocurrencyDTO.toCryptocurrency();
+            @Valid @RequestBody CryptocurrencyPostDTO cryptocurrencyPostDTO) {
+        var registerCryptocurrency = cryptocurrencyPostDTO.toCryptocurrency();
         var cryptocurrencyEntity = cryptocurrencyService.addCryptocurrency(registerCryptocurrency);
         return ResponseEntity.status(HttpStatus.CREATED).body(cryptocurrencyEntity);
     }
@@ -52,8 +53,8 @@ public class CryptocurrencyController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Cryptocurrency> updateCryptocurrency(@PathVariable("id") Long id,
-                                                               @Valid @RequestBody CryptocurrencyDTO cryptocurrencyDTO) {
-        var cryptocurrency = cryptocurrencyDTO.toCryptocurrency();
+                                                               @Valid @RequestBody CryptocurrencyPostDTO cryptocurrencyPostDTO) {
+        var cryptocurrency = cryptocurrencyPostDTO.toCryptocurrency();
         var body = cryptocurrencyService.updateCryptocurrency(id, cryptocurrency);
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }

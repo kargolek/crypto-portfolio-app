@@ -1,13 +1,14 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.PriceNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
@@ -15,6 +16,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Karol Kuta-Orlowicz
  */
 @ExtendWith(SpringExtension.class)
-@Transactional
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PriceServiceIntegrationTest extends MySqlTestContainer {
 
@@ -40,48 +41,61 @@ class PriceServiceIntegrationTest extends MySqlTestContainer {
     @BeforeEach
     public void setup() {
         cryptocurrency = Cryptocurrency.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
+                .name(RandomStringUtils.random(20))
+                .symbol(RandomStringUtils.random(8))
+                .coinMarketId(RandomUtils.nextLong())
                 .build();
     }
 
     @Test
-    @Transactional(propagation = Propagation.NEVER)
     void whenUpdatePrice_thenPriceShouldUpdatedSuccessful() {
         var cryptoEntity = cryptocurrencyService.addCryptocurrency(cryptocurrency);
         var priceEntity = cryptoEntity.getPrice();
         priceEntity.setPriceCurrent(new BigDecimal("100100100100.1002"));
 
-        underTestService.update(priceEntity);
-        var expected = priceRepository.findById(priceEntity.getId());
+        var expected = underTestService.updatePrices(List.of(priceEntity));
 
         assertThat(expected)
-                .get()
                 .extracting(
                         Price::getId,
                         Price::getPriceCurrent,
                         Price::getPercentChange1h
                 ).containsExactly(
-                        priceEntity.getId(),
-                        new BigDecimal("100100100100.100200000000"),
-                        null
+                        Tuple.tuple(
+                                priceEntity.getId(),
+                                new BigDecimal("100100100100.1002"),
+                                null
+                        )
                 );
 
-        assertThat(expected.map(Price::getLastUpdate).orElseThrow())
+        assertThat(expected.stream().map(Price::getLastUpdate).findFirst().orElseThrow())
                 .isEqualToIgnoringNanos(priceEntity.getLastUpdate());
     }
 
     @Test
-    void whenNoPriceAndUpdatePrice_thenThrowPriceNotFound() {
-        var price = Price.builder()
-                .id(100L)
-                .priceCurrent(new BigDecimal("1200.01"))
-                .cryptocurrency(cryptocurrency)
+    void whenUpdatePricesByEmptyList_thenReturnEmptyEntitiesList() {
+        var cryptoEntity = cryptocurrencyService.addCryptocurrency(cryptocurrency);
+        var priceEntity = cryptoEntity.getPrice();
+        priceEntity.setPriceCurrent(new BigDecimal("100100100100.1002"));
+
+        var expected = underTestService.updatePrices(List.of());
+
+        assertThat(expected).hasSize(0);
+    }
+
+    @Test
+    void whenUpdatePricesByNotExistPrice_thenThrowPriceNotFoundExc() {
+        var cryptoEntity = cryptocurrencyService.addCryptocurrency(cryptocurrency);
+        var priceEntity = cryptoEntity.getPrice();
+        priceEntity.setPriceCurrent(new BigDecimal("100100100100.1002"));
+
+        var priceNotExist = Price.builder()
+                .id(120L)
+                .priceCurrent(new BigDecimal("120.0"))
+                .cryptocurrency(cryptoEntity)
                 .build();
 
-        assertThatThrownBy(() -> underTestService.update(price))
-                .isInstanceOf(PriceNotFoundException.class)
-                .hasMessage("Unable to find price with id: 100");
+        assertThatThrownBy(() -> underTestService.updatePrices(List.of(priceNotExist)))
+                .isInstanceOf(PriceNotFoundException.class);
     }
 }

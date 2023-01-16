@@ -10,10 +10,10 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.service.CryptocurrencyService;
 
@@ -23,8 +23,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -41,6 +39,7 @@ class CryptocurrencyControllerUnitTest {
     private MockMvc mockMvc;
     @MockBean
     private CryptocurrencyService cryptocurrencyService;
+
     @MockBean
     private CryptocurrencyRepository cryptocurrencyRepository;
     @Autowired
@@ -173,11 +172,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyPostDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.post(path)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -228,11 +226,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyPostDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.put(path + "/" + cryptocurrencyBTC.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -247,11 +244,10 @@ class CryptocurrencyControllerUnitTest {
         when(cryptocurrencyService.updateCryptocurrency(anyLong(), any(Cryptocurrency.class)))
                 .thenThrow(new CryptocurrencyNotFoundException(1L));
 
-        var body = CryptocurrencyDTO.builder()
-                .name("Bitcoin")
-                .symbol("BTC")
-                .coinMarketId(1L)
-                .build();
+        var body = new CryptocurrencyPostDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
 
         mockMvc.perform(MockMvcRequestBuilders.put(path + "/" + cryptocurrencyBTC.getId())
                         .contentType(MediaType.APPLICATION_JSON)

@@ -15,10 +15,12 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -63,27 +65,28 @@ class PriceServiceUnitTest {
 
     @Test
     void whenUpdateCurrentPrice_thenShouldUpdateSuccessful() {
-        when(priceRepository.findById(1L))
+        when(priceRepository.findById(any()))
                 .thenReturn(Optional.of(price));
-        when(priceRepository.save(price))
-                .thenReturn(price);
-        price.setPriceCurrent(new BigDecimal("1.01"));
+        when(priceRepository.saveAll(List.of(price)))
+                .thenReturn(List.of(price));
 
-        var expected = priceService.update(price);
+        var expected = priceService.updatePrices(List.of(price));
 
-        assertThat(expected.getPriceCurrent())
-                .isEqualTo("1.01");
+        assertThat(expected).extracting(
+                        Price::getPriceCurrent
+                )
+                .containsExactly(
+                        price.getPriceCurrent()
+                );
     }
 
     @Test
-    void whenUpdatePriceWithWrongId_thenThrowPriceNotFound() {
-        when(priceRepository.findById(1L))
-                .thenThrow(new PriceNotFoundException(1L));
+    void whenUpdateByNotExistPrice_thenThrowPriceNotFoundExc() {
+        when(priceRepository.findById(any()))
+                .thenThrow(new PriceNotFoundException(""));
 
-        price.setPriceCurrent(new BigDecimal("1.01"));
-
-        assertThatThrownBy(() -> priceService.update(price))
-                .isInstanceOf(PriceNotFoundException.class)
-                .hasMessage("Unable to find price with id: 1");
+        assertThatThrownBy(() -> priceService.updatePrices(List.of(price)))
+                .isInstanceOf(PriceNotFoundException.class);
     }
+
 }
