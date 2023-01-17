@@ -19,10 +19,8 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
       - name: Build
-        run: mvn -B package --file pom.xml -DskipTests
+        run: mvn -B package --file pom.xml -Dgroups="SmokeTest"
       - name: Unit Test
         run: mvn -B test -Dgroups="UnitTest"
-      - name: Smoke Test
-        run: mvn -B test -Dgroups="SmokeTest"
       - name: Integration Test
         run: mvn -B test -Dgroups="IntegrationTest"
