@@ -24,6 +24,8 @@
 		<mockwebserver.version>4.10.0</mockwebserver.version>
 		<junit-jupiter.version>5.9.2</junit-jupiter.version>
 		<maven-surefire-plugin.version>3.0.0-M8</maven-surefire-plugin.version>
+		<maven-surefire-junit5-tree-reporter.version>1.1.0</maven-surefire-junit5-tree-reporter.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -117,7 +119,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
 					<source>17</source>
 					<target>17</target>
@@ -138,12 +140,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M8</version>
+				<version>${maven-surefire-plugin.version}</version>
 				<dependencies>
 					<dependency>
 						<groupId>me.fabriciorby</groupId>
 						<artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-						<version>1.1.0</version>
+						<version>${maven-surefire-junit5-tree-reporter.version}</version>
 					</dependency>
 				</dependencies>
 				<configuration>
