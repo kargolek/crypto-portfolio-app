@@ -1,6 +1,7 @@
 package pl.cryptoportfolioapp.cryptopriceservice.mapper;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Karol Kuta-Orlowicz
  */
+@Tag("UnitTest")
 class CryptocurrencyMapperTest {
     private static final String FIAT_CURRENCY_USD = "USD";
     private final CryptocurrencyMapper mapper = Mappers.getMapper(CryptocurrencyMapper.class);

@@ -1,7 +1,9 @@
 package pl.cryptoportfolioapp.cryptopriceservice.repository;
 
 import org.hibernate.exception.ConstraintViolationException;
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +26,8 @@ import static org.assertj.core.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class PriceRepositoryIntegrationTest extends MySqlTestContainer {
+@Tag("IntegrationTest")
+public class PriceRepositoryIntegrationTest extends MySqlTestContainer {
 
     @Autowired
     private PriceRepository underTestRepository;

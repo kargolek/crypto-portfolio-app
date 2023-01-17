@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +14,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.service.PriceService;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Tag("SmokeTest")
 class SmokeAppTest extends MySqlTestContainer {
 
     @Autowired

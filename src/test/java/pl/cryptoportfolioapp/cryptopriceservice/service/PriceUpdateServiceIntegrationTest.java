@@ -32,6 +32,7 @@ import static org.assertj.core.groups.Tuple.tuple;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Tag("IntegrationTest")
 class PriceUpdateServiceIntegrationTest extends MySqlTestContainer {
 
     public static MockWebServer mockWebServer;
