@@ -8,7 +8,7 @@ env:
 on: [push]
 
 jobs:
-  build and test:
+  build_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,6 +23,6 @@ jobs:
       - name: Unit Test
         run: mvn -B test -Dgroups="UnitTest"
       - name: Smoke Test
-        run: mvn -B test -Dgroups="Smoke Test"
+        run: mvn -B test -Dgroups="SmokeTest"
       - name: Integration Test
         run: mvn -B test -Dgroups="IntegrationTest"
