@@ -45,17 +45,20 @@ public class CryptocurrencyService {
     }
 
     public Cryptocurrency updateCryptocurrency(Long id, Cryptocurrency cryptocurrency) {
-        var cryptoUpdate = cryptocurrencyRepository.findById(id)
+        var cryptocurrencyToUpdate = cryptocurrencyRepository.findById(id)
                 .orElseThrow(() -> new CryptocurrencyNotFoundException(id));
-        cryptocurrency.setId(cryptoUpdate.getId());
-        cryptocurrency.setLastUpdate(LocalDateTime.now(ZoneOffset.UTC));
-        cryptocurrency.setPrice(cryptoUpdate.getPrice());
+
+        cryptocurrencyToUpdate.setName(cryptocurrency.getName());
+        cryptocurrencyToUpdate.setSymbol(cryptocurrency.getSymbol());
+        cryptocurrencyToUpdate.setCoinMarketId(cryptocurrency.getCoinMarketId());
+        cryptocurrencyToUpdate.setLastUpdate(LocalDateTime.now(ZoneOffset.UTC));
+
         log.info(String.format("Updating cryptocurrency with id: %d, new name: %s, symbol: %s, coinMarketId: %d",
-                cryptoUpdate.getId(),
+                cryptocurrencyToUpdate.getId(),
                 cryptocurrency.getName(),
                 cryptocurrency.getSymbol(),
                 cryptocurrency.getCoinMarketId()));
-        return cryptocurrencyRepository.save(cryptocurrency);
+        return cryptocurrencyRepository.save(cryptocurrencyToUpdate);
     }
 
     public void deleteCryptocurrency(Long id) {

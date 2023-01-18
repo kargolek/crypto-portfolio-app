@@ -1,9 +1,14 @@
 package pl.cryptoportfolioapp.cryptopriceservice.mapper;
 
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.PriceDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.util.CycleAvoidingMappingContext;
@@ -40,6 +45,10 @@ public interface CryptocurrencyMapper {
             @Mapping(target = "priceDTO", source = "quote", qualifiedBy = MappingUtil.PriceMap.class)
     })
     CryptocurrencyDTO mapResponseToCryptocurrencyDto(CryptocurrencyResponseDTO cryptocurrencyResponseDTO);
+
+    Cryptocurrency mapPostDtoToCryptocurrencyEntity(CryptocurrencyPostDTO cryptocurrencyPostDTO);
+
+    CryptocurrencyPostDTO mapEntityToCryptocurrencyPostDto(Cryptocurrency cryptocurrency);
 
     @Mapping(target = "id", ignore = true)
     PriceDTO updateDtoByPriceResDto(@MappingTarget PriceDTO priceDTO, PriceResponseDTO priceResponseDTO);
