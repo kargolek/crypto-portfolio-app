@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -19,5 +20,6 @@ public class PriceDTO {
     private BigDecimal percentChange30d;
     private BigDecimal percentChange60d;
     private BigDecimal percentChange90d;
+    @JsonIgnore
     private CryptocurrencyDTO cryptocurrencyDTO;
 }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.PriceDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.util.CycleAvoidingMappingContext;
@@ -29,6 +30,8 @@ class CryptocurrencyMapperTest {
     private PriceDTO priceDTO;
     private CryptocurrencyResponseDTO cryptocurrencyResponseDTO;
     private PriceResponseDTO priceResponseDTO;
+
+    private CryptocurrencyPostDTO cryptocurrencyPostDTO;
 
     @BeforeEach
     void setUp() {
@@ -68,6 +71,11 @@ class CryptocurrencyMapperTest {
                 .setSymbol("MATIC")
                 .setCoinMarketId(2045L)
                 .setQuote(Map.of(FIAT_CURRENCY_USD, priceResponseDTO));
+
+        cryptocurrencyPostDTO = new CryptocurrencyPostDTO()
+                .setName("MATIC")
+                .setSymbol("MATIC")
+                .setCoinMarketId(2045L);
     }
 
     @Test
@@ -196,5 +204,39 @@ class CryptocurrencyMapperTest {
                 cryptocurrencyResponseDTO.getPriceResponseDTO().getPriceCurrent(),
                 cryptocurrencyResponseDTO.getPriceResponseDTO().getPercentChange1h()
         );
+    }
+
+    @Test
+    void whenMapPostDTO_thenReturnEntity() {
+        var expected = mapper.mapPostDtoToCryptocurrencyEntity(cryptocurrencyPostDTO);
+
+        assertThat(expected)
+                .isInstanceOf(Cryptocurrency.class)
+                .extracting(
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol,
+                        Cryptocurrency::getCoinMarketId
+                ).containsExactly(
+                        cryptocurrencyPostDTO.getName(),
+                        cryptocurrencyPostDTO.getSymbol(),
+                        cryptocurrencyPostDTO.getCoinMarketId()
+                );
+    }
+
+    @Test
+    void whenMapEntity_thenReturnPostDTO() {
+        var expected = mapper.mapEntityToCryptocurrencyPostDto(cryptocurrency);
+
+        assertThat(expected)
+                .isInstanceOf(CryptocurrencyPostDTO.class)
+                .extracting(
+                        CryptocurrencyPostDTO::getName,
+                        CryptocurrencyPostDTO::getSymbol,
+                        CryptocurrencyPostDTO::getCoinMarketId
+                ).containsExactly(
+                        cryptocurrency.getName(),
+                        cryptocurrency.getSymbol(),
+                        cryptocurrency.getCoinMarketId()
+                );
     }
 }

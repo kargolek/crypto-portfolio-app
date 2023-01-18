@@ -129,10 +129,11 @@ class CryptocurrencyServiceUnitTest {
                 .symbol("ETH")
                 .coinMarketId(RandomUtils.nextLong())
                 .build();
+
         when(cryptocurrencyRepository.findById(1L))
                 .thenReturn(Optional.of(cryptocurrency));
-        when(cryptocurrencyRepository.save(cryptoCurrencyUpdate))
-                .thenReturn(cryptoCurrencyUpdate);
+        when(cryptocurrencyRepository.save(cryptocurrency))
+                .thenReturn(cryptocurrency);
 
         var expected = underTestService.updateCryptocurrency(1L, cryptoCurrencyUpdate);
 

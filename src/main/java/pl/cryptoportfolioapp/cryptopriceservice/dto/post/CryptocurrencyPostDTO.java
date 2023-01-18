@@ -2,7 +2,6 @@ package pl.cryptoportfolioapp.cryptopriceservice.dto.post;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -27,12 +26,4 @@ public class CryptocurrencyPostDTO {
     @NotNull(message = "Coin market ID cannot be a null")
     @Min(value = 1, message = "Coin market ID must be greater than 0")
     private Long coinMarketId;
-
-    public Cryptocurrency toCryptocurrency() {
-        return Cryptocurrency.builder()
-                .name(name)
-                .symbol(symbol)
-                .coinMarketId(coinMarketId)
-                .build();
-    }
 }

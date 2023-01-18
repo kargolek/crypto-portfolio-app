@@ -1,5 +1,6 @@
 package pl.cryptoportfolioapp.cryptopriceservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -10,5 +11,7 @@ public class CryptocurrencyDTO {
     private String name;
     private String symbol;
     private Long coinMarketId;
+
+    @JsonProperty("price")
     private PriceDTO priceDTO;
 }
