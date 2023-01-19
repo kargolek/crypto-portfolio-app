@@ -1,4 +1,4 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

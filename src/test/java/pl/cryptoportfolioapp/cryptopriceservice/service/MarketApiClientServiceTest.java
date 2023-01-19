@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.exception.PriceServiceClientException;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -23,10 +23,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Karol Kuta-Orlowicz
  */
 @Tag("UnitTest")
-class PriceServiceClientTest {
+class MarketApiClientServiceTest {
 
     private final MockWebServer mockWebServer = new MockWebServer();
-    private PriceServiceClient priceServiceClient;
+    private MarketApiClientService marketApiClientService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -34,7 +34,7 @@ class PriceServiceClientTest {
         WebClient webClient = WebClient.builder()
                 .baseUrl(mockWebServer.url("").toString())
                 .build();
-        priceServiceClient = new PriceServiceClient(webClient);
+        marketApiClientService = new MarketApiClientService(webClient);
     }
 
     @AfterEach
@@ -99,7 +99,7 @@ class PriceServiceClientTest {
                         .setBody(bodyRes)
         );
 
-        var response = priceServiceClient.getLatestPriceByIds("1");
+        var response = marketApiClientService.getLatestPriceByIds("1");
         var cryptoResponse = response.orElseThrow().getData().get("1");
         var priceResponse = response.orElseThrow().getData().get("1").getQuote().get("USD");
 
@@ -153,9 +153,9 @@ class PriceServiceClientTest {
                         .setBody(bodyRes)
         );
 
-        assertThatThrownBy(() -> priceServiceClient.getLatestPriceByIds("1234567890"))
-                .isInstanceOf(PriceServiceClientException.class)
-                .hasMessageContaining("1234567890");
+        assertThatThrownBy(() -> marketApiClientService.getLatestPriceByIds("1234567890"))
+                .isInstanceOf(MarketApiClientException.class)
+                .hasMessageContaining("Invalid value for \"id\"");
     }
 
     @Test
@@ -178,9 +178,8 @@ class PriceServiceClientTest {
                         .setBody(bodyRes)
         );
 
-        assertThatThrownBy(() -> priceServiceClient.getLatestPriceByIds("1234567890"))
-                .isInstanceOf(PriceServiceClientException.class)
-                .hasMessageContaining("1234567890")
+        assertThatThrownBy(() -> marketApiClientService.getLatestPriceByIds("1234567890"))
+                .isInstanceOf(MarketApiClientException.class)
                 .hasMessageContaining("serverMessage: An internal server error occurred");
     }
 }

@@ -1,4 +1,4 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto.post;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.controller;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

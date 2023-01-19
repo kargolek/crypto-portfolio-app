@@ -1,4 +1,4 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto.response;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.client;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -15,5 +15,5 @@ public class PriceResponseClientDTO {
     private Map<String, CryptocurrencyResponseDTO> data = new HashMap<>();
 
     @JsonProperty("status")
-    private ResponseStatusDTO status;
+    private ServerStatusDTO status;
 }

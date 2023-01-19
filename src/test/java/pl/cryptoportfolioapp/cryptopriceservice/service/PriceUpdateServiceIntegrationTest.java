@@ -12,7 +12,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
-import pl.cryptoportfolioapp.cryptopriceservice.exception.PriceServiceClientException;
+import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
@@ -385,7 +385,7 @@ class PriceUpdateServiceIntegrationTest extends MySqlTestContainer {
         );
 
         assertThatThrownBy(() -> underTest.updateCryptocurrencyPrices())
-                .isInstanceOf(PriceServiceClientException.class);
+                .isInstanceOf(MarketApiClientException.class);
 
         assertThat(cryptocurrencyRepository.findAll()
                 .stream().map(Cryptocurrency::getPrice).toList()).extracting(

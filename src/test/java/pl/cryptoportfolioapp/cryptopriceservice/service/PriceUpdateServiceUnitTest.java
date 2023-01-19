@@ -8,9 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseClientDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseClientDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 
@@ -36,7 +36,7 @@ class PriceUpdateServiceUnitTest {
     private CryptocurrencyService cryptocurrencyService;
 
     @Mock
-    private PriceServiceClient priceServiceClient;
+    private MarketApiClientService marketApiClientService;
 
     @Mock
     private PriceService priceService;
@@ -124,7 +124,7 @@ class PriceUpdateServiceUnitTest {
     void whenUpdateCryptocurrencyPrices_thenPricesShouldBeUpdated() {
         when(cryptocurrencyService.getCryptocurrencies())
                 .thenReturn(cryptocurrencyEntities);
-        when(priceServiceClient.getLatestPriceByIds(any()))
+        when(marketApiClientService.getLatestPriceByIds(any()))
                 .thenReturn(Optional.of(priceResponseClientDTO));
         var priceEntities = cryptocurrencyEntities.stream()
                 .map(Cryptocurrency::getPrice)

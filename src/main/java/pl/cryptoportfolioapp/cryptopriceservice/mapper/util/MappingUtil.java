@@ -1,7 +1,7 @@
 package pl.cryptoportfolioapp.cryptopriceservice.mapper.util;
 
 import org.mapstruct.Qualifier;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseDTO;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

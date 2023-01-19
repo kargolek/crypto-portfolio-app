@@ -3,8 +3,8 @@ package pl.cryptoportfolioapp.cryptopriceservice.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.model.CryptocurrencyDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.CryptocurrencyMapper;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.util.CycleAvoidingMappingContext;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
@@ -29,7 +29,7 @@ public class PriceUpdateService {
     private PriceService priceService;
 
     @Autowired
-    private PriceServiceClient priceServiceClient;
+    private MarketApiClientService marketApiClientService;
 
     public List<Price> updateCryptocurrencyPrices() {
         var cryptocurrencies = cryptocurrencyService.getCryptocurrencies();
@@ -43,7 +43,7 @@ public class PriceUpdateService {
 
         var ids = createCryptocurrenciesIds(cryptocurrenciesDto);
 
-        var responseDTOS = priceServiceClient.getLatestPriceByIds(ids)
+        var responseDTOS = marketApiClientService.getLatestPriceByIds(ids)
                 .orElseThrow()
                 .getData()
                 .values();

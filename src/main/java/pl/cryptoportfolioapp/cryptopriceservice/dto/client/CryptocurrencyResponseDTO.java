@@ -1,4 +1,4 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto.response;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
