@@ -2,10 +2,12 @@ package pl.cryptoportfolioapp.cryptopriceservice;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
+import org.springframework.test.annotation.DirtiesContext;
 import pl.cryptoportfolioapp.cryptopriceservice.controller.CryptocurrencyController;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.service.CryptocurrencyService;
@@ -14,8 +16,10 @@ import pl.cryptoportfolioapp.cryptopriceservice.service.PriceService;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@ExtendWith(MySqlTestContainerExtension.class)
 @Tag("SmokeTest")
-class SmokeAppTest extends MySqlTestContainer {
+//@DirtiesContext
+class SmokeAppTest {
 
     @Autowired
     private CryptocurrencyRepository cryptocurrencyRepository;

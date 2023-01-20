@@ -1,9 +1,10 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,26 +16,29 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import static pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension.mockWebServer;
 
-@ExtendWith(SpringExtension.class)
 @Transactional
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MySqlTestContainerExtension.class)
+@ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("IntegrationTest")
-public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
+public class CryptocurrencyServiceIntegrationTest {
 
     @Autowired
     private CryptocurrencyService underTestService;
@@ -46,22 +50,9 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
 
     private Cryptocurrency cryptocurrency;
 
-    private static MockWebServer mockWebServer;
-
     @DynamicPropertySource
-    static void registerMockServerUrl(DynamicPropertyRegistry registry) {
+    static void registerProperty(DynamicPropertyRegistry registry) {
         registry.add("api.coin.market.cap.baseUrl", () -> mockWebServer.url("/").toString());
-    }
-
-    @BeforeAll
-    static void setUpAll() throws IOException {
-        mockWebServer = new MockWebServer();
-        mockWebServer.start();
-    }
-
-    @AfterAll
-    static void tearDownAll() throws IOException {
-        mockWebServer.shutdown();
     }
 
     @BeforeEach

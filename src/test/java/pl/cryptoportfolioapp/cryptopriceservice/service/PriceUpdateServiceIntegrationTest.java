@@ -1,8 +1,10 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,13 +13,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -25,17 +27,18 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
+import static pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension.mockWebServer;
 
 /**
  * @author Karol Kuta-Orlowicz
  */
 
 @ExtendWith(SpringExtension.class)
+@ExtendWith(MySqlTestContainerExtension.class)
+@ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("IntegrationTest")
-class PriceUpdateServiceIntegrationTest extends MySqlTestContainer {
-
-    public static MockWebServer mockWebServer;
+class PriceUpdateServiceIntegrationTest {
 
     @Autowired
     private PriceUpdateService underTest;
@@ -49,19 +52,8 @@ class PriceUpdateServiceIntegrationTest extends MySqlTestContainer {
     private Cryptocurrency eth;
 
     @DynamicPropertySource
-    static void registerMockServerUrl(DynamicPropertyRegistry registry) {
+    static void registerProperty(DynamicPropertyRegistry registry) {
         registry.add("api.coin.market.cap.baseUrl", () -> mockWebServer.url("/").toString());
-    }
-
-    @BeforeAll
-    static void setUpAll() throws IOException {
-        mockWebServer = new MockWebServer();
-        mockWebServer.start();
-    }
-
-    @AfterAll
-    static void tearDownAll() throws IOException {
-        mockWebServer.shutdown();
     }
 
     @BeforeEach

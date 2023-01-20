@@ -12,7 +12,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 
@@ -23,10 +23,11 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
+@ExtendWith(MySqlTestContainerExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Tag("IntegrationTest")
-public class PriceRepositoryIntegrationTest extends MySqlTestContainer {
+public class PriceRepositoryIntegrationTest {
 
     @Autowired
     private PriceRepository underTestRepository;

@@ -1,11 +1,10 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +12,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyMapDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyQuoteDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -20,29 +20,24 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
+import static pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension.mockWebServer;
 
 /**
  * @author Karol Kuta-Orlowicz
  */
+@ExtendWith(MockWebServerExtension.class)
 @Tag("UnitTest")
 class MarketApiClientServiceTest {
-
-    private final MockWebServer mockWebServer = new MockWebServer();
     private MarketApiClientService underTest;
 
     @BeforeEach
     void setUp() throws IOException {
-        mockWebServer.start();
         WebClient webClient = WebClient.builder()
                 .baseUrl(mockWebServer.url("").toString())
                 .build();
         underTest = new MarketApiClientService(webClient);
     }
 
-    @AfterEach
-    public void tearDown() throws IOException {
-        mockWebServer.close();
-    }
 
     @Test
     void whenServerRespond200_thenClientReturnRespondDTOCollection() {
