@@ -9,10 +9,10 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class PriceResponseClientDTO {
+public class QuotesDataDTO {
 
     @JsonProperty("data")
-    private Map<String, CryptocurrencyResponseDTO> data = new HashMap<>();
+    private Map<String, CryptocurrencyQuoteDTO> data = new HashMap<>();
 
     @JsonProperty("status")
     private ServerStatusDTO status;

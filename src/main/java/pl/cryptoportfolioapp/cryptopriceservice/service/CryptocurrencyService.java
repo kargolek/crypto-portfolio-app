@@ -3,6 +3,8 @@ package pl.cryptoportfolioapp.cryptopriceservice.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyMapDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.MapDataDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
@@ -11,6 +13,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyReposit
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -18,11 +21,11 @@ import java.util.List;
 public class CryptocurrencyService {
 
     private final CryptocurrencyRepository cryptocurrencyRepository;
+    private final MarketApiClientService marketApiClientService;
 
     public Cryptocurrency addCryptocurrency(Cryptocurrency cryptocurrency) {
-        log.info(String.format("Adding new cryptocurrency name: %s, coinMarketCapId: %s",
-                cryptocurrency.getName(),
-                cryptocurrency.getCoinMarketId()));
+        if (cryptocurrency.getCoinMarketId() == null)
+            cryptocurrency.setCoinMarketId(getCoinMarketId(cryptocurrency).orElseThrow());
 
         var price = Price.builder()
                 .cryptocurrency(cryptocurrency)
@@ -30,6 +33,10 @@ public class CryptocurrencyService {
                 .build();
         cryptocurrency.setPrice(price);
         cryptocurrency.setLastUpdate(LocalDateTime.now(ZoneOffset.UTC));
+
+        log.info(String.format("Adding new cryptocurrency name: %s, coinMarketCapId: %s",
+                cryptocurrency.getName(),
+                cryptocurrency.getCoinMarketId()));
         return cryptocurrencyRepository.save(cryptocurrency);
     }
 
@@ -69,5 +76,15 @@ public class CryptocurrencyService {
     public List<Cryptocurrency> getByName(List<String> name) {
         log.info(String.format("Finding cryptocurrencies by name: %s", name));
         return cryptocurrencyRepository.findByName(name);
+    }
+
+    private Optional<Long> getCoinMarketId(Cryptocurrency cryptocurrency){
+        return marketApiClientService.getCryptoMarketIdBySymbol(cryptocurrency.getSymbol())
+                .map(MapDataDTO::getData)
+                .orElseThrow()
+                .stream()
+                .filter(cryptocurrencyMapDTO -> cryptocurrencyMapDTO.getSymbol().equalsIgnoreCase(cryptocurrency.getSymbol()))
+                .map(CryptocurrencyMapDTO::getCoinMarketId)
+                .findFirst();
     }
 }

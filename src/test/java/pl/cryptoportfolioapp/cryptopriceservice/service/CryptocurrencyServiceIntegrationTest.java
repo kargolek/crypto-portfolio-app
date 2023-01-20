@@ -1,23 +1,29 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
+import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -39,6 +45,24 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
     private PriceRepository priceRepository;
 
     private Cryptocurrency cryptocurrency;
+
+    private static MockWebServer mockWebServer;
+
+    @DynamicPropertySource
+    static void registerMockServerUrl(DynamicPropertyRegistry registry) {
+        registry.add("api.coin.market.cap.baseUrl", () -> mockWebServer.url("/").toString());
+    }
+
+    @BeforeAll
+    static void setUpAll() throws IOException {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+    }
+
+    @AfterAll
+    static void tearDownAll() throws IOException {
+        mockWebServer.shutdown();
+    }
 
     @BeforeEach
     public void setup() {
@@ -69,6 +93,101 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
                                 expected.getLastUpdate()
                         )
                 );
+    }
+
+    @Test
+    void whenAddCryptocurrencyWithoutMarketId_thenShouldSaveSuccessful() {
+        cryptocurrency.setCoinMarketId(null);
+
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-20T00:06:31.909Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 16,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": [
+                        {
+                            "id": 1,
+                            "name": "Bitcoin",
+                            "symbol": "BTC",
+                            "slug": "bitcoin",
+                            "rank": 1,
+                            "displayTV": 1,
+                            "manualSetTV": 0,
+                            "tvCoinSymbol": "",
+                            "is_active": 1,
+                            "first_historical_data": "2013-04-28T18:47:21.000Z",
+                            "last_historical_data": "2023-01-19T23:59:00.000Z",
+                            "platform": null
+                        }
+                    ]
+                }
+                """;
+
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        var expected = underTestService.addCryptocurrency(cryptocurrency);
+
+        System.out.println("COIN MARKET: " + expected.getCoinMarketId());
+
+        assertThat(cryptocurrencyRepository.findAll())
+                .extracting(
+                        Cryptocurrency::getId,
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol,
+                        Cryptocurrency::getCoinMarketId,
+                        Cryptocurrency::getLastUpdate
+                ).containsExactly(
+                        tuple(
+                                expected.getId(),
+                                expected.getName(),
+                                expected.getSymbol(),
+                                expected.getCoinMarketId(),
+                                expected.getLastUpdate()
+                        )
+                );
+    }
+
+    @Test
+    void whenAddWithoutMarketIdAndMarketResponse500_thenShouldSave() {
+        cryptocurrency.setCoinMarketId(null);
+
+        var bodyRes = """
+                {
+                    "status": {
+                    "timestamp": "2018-06-02T22:51:28.209Z",
+                    "error_code": 500,
+                    "error_message": "An internal server error occurred",
+                    "elapsed": 10,
+                    "credit_count": 0
+                    }
+                }
+                """;
+
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(500)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        assertThatThrownBy(() -> underTestService.addCryptocurrency(cryptocurrency))
+                .isInstanceOf(MarketApiClientException.class)
+                .hasMessageContaining("serverMessage: An internal server error occurred");
+
+        cryptocurrencyRepository.findAll().stream()
+                .peek(cryptocurrency1 -> {
+                    System.out.println(cryptocurrency1.getName());
+                });
     }
 
     @Test

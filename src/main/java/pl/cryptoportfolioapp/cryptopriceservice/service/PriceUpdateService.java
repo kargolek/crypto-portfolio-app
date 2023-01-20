@@ -3,8 +3,8 @@ package pl.cryptoportfolioapp.cryptopriceservice.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyQuoteDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.model.CryptocurrencyDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.CryptocurrencyMapper;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.util.CycleAvoidingMappingContext;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
@@ -59,13 +59,13 @@ public class PriceUpdateService {
     }
 
     private List<CryptocurrencyDTO> updateDtoByNewPrice(List<CryptocurrencyDTO> cryptocurrencyDTOS,
-                                                        Collection<CryptocurrencyResponseDTO> responseDTOS) {
+                                                        Collection<CryptocurrencyQuoteDTO> responseDTOS) {
         return cryptocurrencyDTOS.stream()
                 .<CryptocurrencyDTO>mapMulti((cryptocurrencyDTO, consumer) -> {
                     responseDTOS.stream()
                             .filter(cryptocurrencyResponseDTO -> cryptocurrencyResponseDTO.getCoinMarketId().equals(cryptocurrencyDTO.getCoinMarketId()))
                             .findFirst()
-                            .ifPresent(cryptocurrencyResponseDTO -> CryptocurrencyMapper.INSTANCE.updateDtoByCryptocurrencyResDto(cryptocurrencyDTO, cryptocurrencyResponseDTO));
+                            .ifPresent(cryptocurrencyResponseDTO -> CryptocurrencyMapper.INSTANCE.updateDtoByCryptocurrencyQuoteDto(cryptocurrencyDTO, cryptocurrencyResponseDTO));
                     consumer.accept(cryptocurrencyDTO);
                 })
                 .collect(Collectors.toList());

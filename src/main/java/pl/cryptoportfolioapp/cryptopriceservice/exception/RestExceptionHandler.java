@@ -65,6 +65,21 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(jsonApiError, jsonApiError.getStatus());
     }
 
+    @ExceptionHandler(MarketApiClientException.class)
+    public ResponseEntity<?> handleMarketApiClientException(MarketApiClientException ex) {
+        var jsonApiError = JsonApiError.builder()
+                .status(ex.getHttpStatus())
+                .message(String.format("Server status code: %d, message: %s",
+                        ex.getHttpStatus().value(),
+                        ex.getServerMessage()))
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
+        log.info(String.format("Status: %s Message: %s",
+                jsonApiError.getStatus(),
+                jsonApiError.getMessage()));
+        return new ResponseEntity<>(jsonApiError, jsonApiError.getStatus());
+    }
+
     @NotNull
     @Override
     public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 @Accessors(chain = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PriceResponseDTO {
+public class PriceQuoteDTO {
 
     @JsonProperty("price")
     private BigDecimal priceCurrent;

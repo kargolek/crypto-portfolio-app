@@ -29,6 +29,7 @@ public class MarketApiClientImpl implements MarketApiClient {
 
     @Override
     public <T> Optional<T> getRequest(URI uri, Class<T> map) {
+        log.info("Calling get request for path:{}, query:{}", uri.getPath(), uri.getQuery());
         return this.webClient.get()
                 .uri(uriBuilder -> uriBuilder.path(uri.getPath())
                         .query(uri.getQuery())
@@ -38,7 +39,7 @@ public class MarketApiClientImpl implements MarketApiClient {
                         .flatMap(body -> Mono.error(new MarketApiClientException(
                                 clientResponse.statusCode(),
                                 "Error during calling get request",
-                                Optional.of(body.getStatus().getMessage()).orElse("No message")
+                                Optional.ofNullable(body.getStatus().getMessage()).orElse("No message")
                         ))))
                 .bodyToMono(map)
                 .blockOptional();

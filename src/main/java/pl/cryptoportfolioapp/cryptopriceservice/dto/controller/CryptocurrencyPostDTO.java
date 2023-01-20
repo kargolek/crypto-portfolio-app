@@ -23,7 +23,6 @@ public class CryptocurrencyPostDTO {
     @Size(min = 2, max = 20, message = "Symbol length exceeds range [2,20]")
     private String symbol;
 
-    @NotNull(message = "Coin market ID cannot be a null")
     @Min(value = 1, message = "Coin market ID must be greater than 0")
     private Long coinMarketId;
 }

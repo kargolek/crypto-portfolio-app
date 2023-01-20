@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyMapDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyQuoteDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 
 /**
  * @author Karol Kuta-Orlowicz
@@ -26,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MarketApiClientServiceTest {
 
     private final MockWebServer mockWebServer = new MockWebServer();
-    private MarketApiClientService marketApiClientService;
+    private MarketApiClientService underTest;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -34,7 +36,7 @@ class MarketApiClientServiceTest {
         WebClient webClient = WebClient.builder()
                 .baseUrl(mockWebServer.url("").toString())
                 .build();
-        marketApiClientService = new MarketApiClientService(webClient);
+        underTest = new MarketApiClientService(webClient);
     }
 
     @AfterEach
@@ -99,15 +101,15 @@ class MarketApiClientServiceTest {
                         .setBody(bodyRes)
         );
 
-        var response = marketApiClientService.getLatestPriceByIds("1");
+        var response = underTest.getLatestPriceByIds("1");
         var cryptoResponse = response.orElseThrow().getData().get("1");
         var priceResponse = response.orElseThrow().getData().get("1").getQuote().get("USD");
 
         assertThat(cryptoResponse)
                 .extracting(
-                        CryptocurrencyResponseDTO::getName,
-                        CryptocurrencyResponseDTO::getSymbol,
-                        CryptocurrencyResponseDTO::getCoinMarketId
+                        CryptocurrencyQuoteDTO::getName,
+                        CryptocurrencyQuoteDTO::getSymbol,
+                        CryptocurrencyQuoteDTO::getCoinMarketId
                 ).containsExactly(
                         "Bitcoin",
                         "BTC",
@@ -115,13 +117,13 @@ class MarketApiClientServiceTest {
                 );
 
         assertThat(priceResponse).extracting(
-                PriceResponseDTO::getPriceCurrent,
-                PriceResponseDTO::getPercentChange1h,
-                PriceResponseDTO::getPercentChange24h,
-                PriceResponseDTO::getPercentChange7d,
-                PriceResponseDTO::getPercentChange30d,
-                PriceResponseDTO::getPercentChange60d,
-                PriceResponseDTO::getPercentChange90d
+                PriceQuoteDTO::getPriceCurrent,
+                PriceQuoteDTO::getPercentChange1h,
+                PriceQuoteDTO::getPercentChange24h,
+                PriceQuoteDTO::getPercentChange7d,
+                PriceQuoteDTO::getPercentChange30d,
+                PriceQuoteDTO::getPercentChange60d,
+                PriceQuoteDTO::getPercentChange90d
         ).containsExactly(
                 new BigDecimal("6602.60701122"),
                 new BigDecimal("0.988615"),
@@ -153,7 +155,7 @@ class MarketApiClientServiceTest {
                         .setBody(bodyRes)
         );
 
-        assertThatThrownBy(() -> marketApiClientService.getLatestPriceByIds("1234567890"))
+        assertThatThrownBy(() -> underTest.getLatestPriceByIds("1234567890"))
                 .isInstanceOf(MarketApiClientException.class)
                 .hasMessageContaining("Invalid value for \"id\"");
     }
@@ -178,8 +180,88 @@ class MarketApiClientServiceTest {
                         .setBody(bodyRes)
         );
 
-        assertThatThrownBy(() -> marketApiClientService.getLatestPriceByIds("1234567890"))
+        assertThatThrownBy(() -> underTest.getLatestPriceByIds("1234567890"))
                 .isInstanceOf(MarketApiClientException.class)
                 .hasMessageContaining("serverMessage: An internal server error occurred");
     }
+
+    @Test
+    void whenServerRes200_thenClientReturnMapDataDTO() {
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-19T21:30:07.690Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 15,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": [
+                        {
+                            "id": 1027,
+                            "name": "Ethereum",
+                            "symbol": "ETH",
+                            "slug": "ethereum",
+                            "rank": 2,
+                            "displayTV": 1,
+                            "manualSetTV": 0,
+                            "tvCoinSymbol": "",
+                            "is_active": 1,
+                            "first_historical_data": "2015-08-07T14:49:30.000Z",
+                            "last_historical_data": "2023-01-19T21:19:00.000Z",
+                            "platform": null
+                        }
+                    ]
+                }
+                """;
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        var expected = underTest.getCryptoMarketIdBySymbol("eth");
+
+        assertThat(expected.orElseThrow().getData())
+                .extracting(
+                        CryptocurrencyMapDTO::getName,
+                        CryptocurrencyMapDTO::getSymbol,
+                        CryptocurrencyMapDTO::getCoinMarketId
+                ).containsExactly(
+                        tuple(
+                                "Ethereum",
+                                "ETH",
+                                1027L
+                        )
+                );
+    }
+
+    @Test
+    void whenServerRes400_thenThrowMarketClientExc() {
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-19T22:08:01.209Z",
+                        "error_code": 400,
+                        "error_message": "\\"symbol\\" is not allowed to be empty",
+                        "elapsed": 0,
+                        "credit_count": 0
+                    }
+                }
+                """;
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(400)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        assertThatThrownBy(() -> underTest.getCryptoMarketIdBySymbol(""))
+                .isInstanceOf(MarketApiClientException.class)
+                .hasMessageContaining("serverMessage: \"symbol\" is not allowed to be empty");
+
+    }
+
 }

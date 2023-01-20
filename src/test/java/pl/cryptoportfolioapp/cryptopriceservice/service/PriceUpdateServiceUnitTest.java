@@ -8,9 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseClientDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyQuoteDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.QuotesDataDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 
@@ -45,9 +45,9 @@ class PriceUpdateServiceUnitTest {
     private PriceUpdateService underTest;
 
     private List<Cryptocurrency> cryptocurrencyEntities;
-    private PriceResponseClientDTO priceResponseClientDTO;
-    private PriceResponseDTO priceResponseBTC;
-    private PriceResponseDTO priceResponseETH;
+    private QuotesDataDTO quotesDataDTO;
+    private PriceQuoteDTO priceResponseBTC;
+    private PriceQuoteDTO priceResponseETH;
     private Price priceETH;
     private Price priceBTC;
 
@@ -95,27 +95,27 @@ class PriceUpdateServiceUnitTest {
 
         cryptocurrencyEntities = List.of(bitcoin, ethereum);
 
-        priceResponseBTC = new PriceResponseDTO()
+        priceResponseBTC = new PriceQuoteDTO()
                 .setPriceCurrent(new BigDecimal("21000.5"))
                 .setPercentChange1h(new BigDecimal("5.0"))
                 .setPercentChange24h(new BigDecimal("7.5"));
-        priceResponseETH = new PriceResponseDTO()
+        priceResponseETH = new PriceQuoteDTO()
                 .setPriceCurrent(new BigDecimal("2000.5"))
                 .setPercentChange1h(new BigDecimal("25.5"))
                 .setPercentChange24h(new BigDecimal("40.5"));
 
-        var cryptoBTC = new CryptocurrencyResponseDTO()
+        var cryptoBTC = new CryptocurrencyQuoteDTO()
                 .setName(btcName)
                 .setSymbol(btcSymbol)
                 .setCoinMarketId(btcMarketId)
                 .setQuote(Map.of("USD", priceResponseBTC));
-        var cryptoETH = new CryptocurrencyResponseDTO()
+        var cryptoETH = new CryptocurrencyQuoteDTO()
                 .setName(ethName)
                 .setSymbol(ethSymbol)
                 .setCoinMarketId(ethMarketId)
                 .setQuote(Map.of("USD", priceResponseETH));
 
-        priceResponseClientDTO = new PriceResponseClientDTO()
+        quotesDataDTO = new QuotesDataDTO()
                 .setData(Map.of("1", cryptoBTC, "1027", cryptoETH));
 
     }
@@ -125,7 +125,7 @@ class PriceUpdateServiceUnitTest {
         when(cryptocurrencyService.getCryptocurrencies())
                 .thenReturn(cryptocurrencyEntities);
         when(marketApiClientService.getLatestPriceByIds(any()))
-                .thenReturn(Optional.of(priceResponseClientDTO));
+                .thenReturn(Optional.of(quotesDataDTO));
         var priceEntities = cryptocurrencyEntities.stream()
                 .map(Cryptocurrency::getPrice)
                 .toList();
