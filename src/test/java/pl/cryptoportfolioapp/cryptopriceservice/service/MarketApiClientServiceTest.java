@@ -14,7 +14,6 @@ import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 import pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +30,7 @@ class MarketApiClientServiceTest {
     private MarketApiClientService underTest;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         WebClient webClient = WebClient.builder()
                 .baseUrl(mockWebServer.url("").toString())
                 .build();

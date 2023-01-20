@@ -1,9 +1,9 @@
 package pl.cryptoportfolioapp.cryptopriceservice.extension;
 
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.extension.*;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.IOException;
 

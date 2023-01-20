@@ -2,9 +2,6 @@ package pl.cryptoportfolioapp.cryptopriceservice.extension;
 
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.event.BeforeTestExecutionEvent;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -17,7 +14,7 @@ public class MySqlTestContainerExtension implements BeforeAllCallback {
     static final MySQLContainer<?> mySQLContainer = new MySQLContainer<>("mysql:8");
 
     @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
+    public void beforeAll(ExtensionContext extensionContext) {
         mySQLContainer.withReuse(true);
         mySQLContainer.start();
         System.setProperty("spring.datasource.url", mySQLContainer.getJdbcUrl());
