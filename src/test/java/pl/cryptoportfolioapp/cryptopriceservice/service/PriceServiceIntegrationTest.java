@@ -10,8 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.PriceNotFoundException;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.PriceRepository;
@@ -26,9 +26,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Karol Kuta-Orlowicz
  */
 @ExtendWith(SpringExtension.class)
+@ExtendWith(MySqlTestContainerExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("IntegrationTest")
-class PriceServiceIntegrationTest extends MySqlTestContainer {
+class PriceServiceIntegrationTest {
 
     @Autowired
     private PriceService underTestService;

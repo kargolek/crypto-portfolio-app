@@ -11,7 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Example;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
-import pl.cryptoportfolioapp.cryptopriceservice.container.MySqlTestContainer;
+import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 
 import java.time.LocalDateTime;
@@ -20,10 +20,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
+@ExtendWith(MySqlTestContainerExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Tag("IntegrationTest")
-class CryptocurrencyRepositoryIntegrationTest extends MySqlTestContainer {
+class CryptocurrencyRepositoryIntegrationTest {
 
     @Autowired
     private CryptocurrencyRepository underTestRepository;
