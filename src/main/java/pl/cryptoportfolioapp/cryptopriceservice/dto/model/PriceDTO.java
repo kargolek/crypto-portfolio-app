@@ -1,8 +1,9 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.model.CryptocurrencyDTO;
 
 import java.math.BigDecimal;
 

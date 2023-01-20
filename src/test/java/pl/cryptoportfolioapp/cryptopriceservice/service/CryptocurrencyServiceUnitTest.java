@@ -8,6 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyMapDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.MapDataDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
@@ -28,10 +30,14 @@ class CryptocurrencyServiceUnitTest {
     @Mock
     private CryptocurrencyRepository cryptocurrencyRepository;
 
+    @Mock
+    private MarketApiClientService marketApiClientService;
+
     @InjectMocks
     private CryptocurrencyService underTestService;
 
     private Cryptocurrency cryptocurrency;
+    private MapDataDTO mapDataDTO;
 
     @BeforeEach
     public void setup() {
@@ -42,12 +48,48 @@ class CryptocurrencyServiceUnitTest {
                 .coinMarketId(RandomUtils.nextLong())
                 .lastUpdate(LocalDateTime.now())
                 .build();
+
+        var cryptocurrencyMapDTO = new CryptocurrencyMapDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC")
+                .setCoinMarketId(1L);
+
+        mapDataDTO = new MapDataDTO()
+                .setData(List.of(cryptocurrencyMapDTO));
     }
 
     @Test
     void whenAddCryptoCurrency_thenReturnEntity() {
         when(cryptocurrencyRepository.save(cryptocurrency))
                 .thenReturn(cryptocurrency);
+
+        var expected = underTestService.addCryptocurrency(cryptocurrency);
+
+        assertThat(expected)
+                .extracting(
+                        Cryptocurrency::getId,
+                        Cryptocurrency::getName,
+                        Cryptocurrency::getSymbol,
+                        Cryptocurrency::getCoinMarketId,
+                        Cryptocurrency::getLastUpdate)
+                .containsExactly(
+                        cryptocurrency.getId(),
+                        cryptocurrency.getName(),
+                        cryptocurrency.getSymbol(),
+                        cryptocurrency.getCoinMarketId(),
+                        cryptocurrency.getLastUpdate()
+                );
+    }
+
+    @Test
+    void whenAddCryptoCurrencyWithoutMarketId_thenReturnEntity() {
+        when(marketApiClientService.getCryptoMarketIdBySymbol("BTC"))
+                .thenReturn(Optional.of(mapDataDTO));
+
+        when(cryptocurrencyRepository.save(cryptocurrency))
+                .thenReturn(cryptocurrency);
+
+        cryptocurrency.setCoinMarketId(null);
 
         var expected = underTestService.addCryptocurrency(cryptocurrency);
 

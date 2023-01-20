@@ -1,11 +1,10 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto.post;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.controller;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -23,7 +22,6 @@ public class CryptocurrencyPostDTO {
     @Size(min = 2, max = 20, message = "Symbol length exceeds range [2,20]")
     private String symbol;
 
-    @NotNull(message = "Coin market ID cannot be a null")
     @Min(value = 1, message = "Coin market ID must be greater than 0")
     private Long coinMarketId;
 }

@@ -1,7 +1,7 @@
 package pl.cryptoportfolioapp.cryptopriceservice.mapper.util;
 
 import org.mapstruct.Qualifier;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -20,7 +20,7 @@ public class MappingUtil {
     }
 
     @PriceMap
-    public PriceResponseDTO getPriceResponseDTO(Map<String, PriceResponseDTO> quote) {
+    public PriceQuoteDTO getPriceResponseDTO(Map<String, PriceQuoteDTO> quote) {
         return quote.get("USD");
     }
 }

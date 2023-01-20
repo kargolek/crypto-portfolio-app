@@ -4,11 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.CryptocurrencyDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.PriceDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.CryptocurrencyResponseDTO;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.response.PriceResponseDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.CryptocurrencyQuoteDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.client.PriceQuoteDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.model.CryptocurrencyDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.model.PriceDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.controller.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.mapper.util.CycleAvoidingMappingContext;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
@@ -28,8 +28,8 @@ class CryptocurrencyMapperTest {
     private Cryptocurrency cryptocurrency;
     private CryptocurrencyDTO cryptocurrencyDTO;
     private PriceDTO priceDTO;
-    private CryptocurrencyResponseDTO cryptocurrencyResponseDTO;
-    private PriceResponseDTO priceResponseDTO;
+    private CryptocurrencyQuoteDTO cryptocurrencyQuoteDTO;
+    private PriceQuoteDTO priceQuoteDTO;
 
     private CryptocurrencyPostDTO cryptocurrencyPostDTO;
 
@@ -62,15 +62,15 @@ class CryptocurrencyMapperTest {
                 .setCoinMarketId(1027L)
                 .setPriceDTO(priceDTO);
 
-        priceResponseDTO = new PriceResponseDTO()
+        priceQuoteDTO = new PriceQuoteDTO()
                 .setPriceCurrent(new BigDecimal("0.90"))
                 .setPercentChange1h(new BigDecimal("1.5"));
 
-        cryptocurrencyResponseDTO = new CryptocurrencyResponseDTO()
+        cryptocurrencyQuoteDTO = new CryptocurrencyQuoteDTO()
                 .setName("MATIC")
                 .setSymbol("MATIC")
                 .setCoinMarketId(2045L)
-                .setQuote(Map.of(FIAT_CURRENCY_USD, priceResponseDTO));
+                .setQuote(Map.of(FIAT_CURRENCY_USD, priceQuoteDTO));
 
         cryptocurrencyPostDTO = new CryptocurrencyPostDTO()
                 .setName("MATIC")
@@ -94,8 +94,8 @@ class CryptocurrencyMapperTest {
     }
 
     @Test
-    void whenMapResponse_thenReturnPriceDTO() {
-        var dto = mapper.mapResponseToPriceDto(priceResponseDTO);
+    void whenMapQuotes_thenReturnPriceDTO() {
+        var dto = mapper.mapQuoteDtoToPriceDto(priceQuoteDTO);
 
         assertThat(dto).extracting(
                 PriceDTO::getId,
@@ -103,8 +103,8 @@ class CryptocurrencyMapperTest {
                 PriceDTO::getPercentChange1h
         ).containsExactly(
                 null,
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
         );
     }
 
@@ -137,8 +137,8 @@ class CryptocurrencyMapperTest {
     }
 
     @Test
-    void whenMapResponse_thenReturnCryptocurrencyDto() {
-        var dto = mapper.mapResponseToCryptocurrencyDto(cryptocurrencyResponseDTO);
+    void whenMapQuotes_thenReturnCryptocurrencyDto() {
+        var dto = mapper.mapQuoteDtoToCryptocurrencyDto(cryptocurrencyQuoteDTO);
 
         assertThat(dto).extracting(
                 CryptocurrencyDTO::getId,
@@ -147,9 +147,9 @@ class CryptocurrencyMapperTest {
                 CryptocurrencyDTO::getCoinMarketId
         ).containsExactly(
                 null,
-                cryptocurrencyResponseDTO.getName(),
-                cryptocurrencyResponseDTO.getSymbol(),
-                cryptocurrencyResponseDTO.getCoinMarketId()
+                cryptocurrencyQuoteDTO.getName(),
+                cryptocurrencyQuoteDTO.getSymbol(),
+                cryptocurrencyQuoteDTO.getCoinMarketId()
         );
 
         assertThat(dto.getPriceDTO()).extracting(
@@ -158,14 +158,14 @@ class CryptocurrencyMapperTest {
                 PriceDTO::getPercentChange1h
         ).containsExactly(
                 null,
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
         );
     }
 
     @Test
-    void whenUpdateDtoByResponse_thenReturnUpdatedPriceDto() {
-        var dto = mapper.updateDtoByPriceResDto(priceDTO, priceResponseDTO);
+    void whenUpdateDtoByQuotes_thenReturnUpdatedPriceDto() {
+        var dto = mapper.updateDtoByPriceQuoteDto(priceDTO, priceQuoteDTO);
 
         assertThat(dto).extracting(
                 PriceDTO::getId,
@@ -173,15 +173,15 @@ class CryptocurrencyMapperTest {
                 PriceDTO::getPercentChange1h
         ).containsExactly(
                 priceDTO.getId(),
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
-                cryptocurrencyResponseDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPriceCurrent(),
+                cryptocurrencyQuoteDTO.getQuote().get(FIAT_CURRENCY_USD).getPercentChange1h()
         );
     }
 
     @Test
     void whenUpdateDtoByResponse_thenReturnUpdatedCryptocurrencyDto() {
-        var dtoUpdated = mapper.updateDtoByCryptocurrencyResDto(cryptocurrencyDTO,
-                cryptocurrencyResponseDTO);
+        var dtoUpdated = mapper.updateDtoByCryptocurrencyQuoteDto(cryptocurrencyDTO,
+                cryptocurrencyQuoteDTO);
 
         assertThat(dtoUpdated).extracting(
                 CryptocurrencyDTO::getId,
@@ -201,8 +201,8 @@ class CryptocurrencyMapperTest {
                 PriceDTO::getPercentChange1h
         ).containsExactly(
                 cryptocurrencyDTO.getPriceDTO().getId(),
-                cryptocurrencyResponseDTO.getPriceResponseDTO().getPriceCurrent(),
-                cryptocurrencyResponseDTO.getPriceResponseDTO().getPercentChange1h()
+                cryptocurrencyQuoteDTO.getPriceResponseDTO().getPriceCurrent(),
+                cryptocurrencyQuoteDTO.getPriceResponseDTO().getPercentChange1h()
         );
     }
 

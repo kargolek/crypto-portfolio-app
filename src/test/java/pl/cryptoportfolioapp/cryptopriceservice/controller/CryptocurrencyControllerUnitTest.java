@@ -8,15 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import pl.cryptoportfolioapp.cryptopriceservice.dto.post.CryptocurrencyPostDTO;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.controller.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.CryptocurrencyNotFoundException;
+import pl.cryptoportfolioapp.cryptopriceservice.exception.MarketApiClientException;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Cryptocurrency;
 import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 import pl.cryptoportfolioapp.cryptopriceservice.service.CryptocurrencyService;
+import pl.cryptoportfolioapp.cryptopriceservice.service.MarketApiClientService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,6 +47,10 @@ class CryptocurrencyControllerUnitTest {
 
     @MockBean
     private CryptocurrencyRepository cryptocurrencyRepository;
+
+    @MockBean
+    private MarketApiClientService marketApiClientService;
+
     @Autowired
     private ObjectMapper objectMapper;
     private Cryptocurrency cryptocurrencyBTC;
@@ -170,7 +177,7 @@ class CryptocurrencyControllerUnitTest {
     }
 
     @Test
-    void whenPostCryptocurrency_thenReturn() throws Exception {
+    void whenPostCryptocurrency_thenReturnStatus201AndBodyData() throws Exception {
         when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
                 .thenReturn(cryptocurrencyBTC);
 
@@ -188,6 +195,44 @@ class CryptocurrencyControllerUnitTest {
                 .andExpect(jsonPath("$.symbol").value("BTC"))
                 .andExpect(jsonPath("$.coinMarketId").value(1L))
                 .andExpect(jsonPath("$.price").isNotEmpty());
+    }
+
+    @Test
+    void whenPostCryptocurrencyNoMarketId_thenReturnStatus201AndBodyData() throws Exception {
+        when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
+                .thenReturn(cryptocurrencyBTC);
+
+        var body = new CryptocurrencyPostDTO()
+                .setName("Bitcoin")
+                .setSymbol("BTC");
+
+        mockMvc.perform(MockMvcRequestBuilders.post(path)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Bitcoin"))
+                .andExpect(jsonPath("$.symbol").value("BTC"))
+                .andExpect(jsonPath("$.coinMarketId").value(1L))
+                .andExpect(jsonPath("$.price").isNotEmpty());
+    }
+
+    @Test
+    void whenPostCryptocurrencyNoMarketIdIncorrectSymbol_thenReturnStatus400AndBodyData() throws Exception {
+        when(cryptocurrencyService.addCryptocurrency(any(Cryptocurrency.class)))
+                .thenThrow(new MarketApiClientException(HttpStatus.BAD_REQUEST, "Error client occurred", "Invalid value for symbol: SOME_COIN"));
+
+        var body = new CryptocurrencyPostDTO()
+                .setName("SOME_COIN")
+                .setSymbol("SOME_COIN");
+
+        mockMvc.perform(MockMvcRequestBuilders.post(path)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").isString());
     }
 
     @Test

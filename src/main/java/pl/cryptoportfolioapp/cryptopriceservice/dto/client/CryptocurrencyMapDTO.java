@@ -1,17 +1,17 @@
-package pl.cryptoportfolioapp.cryptopriceservice.dto.response;
+package pl.cryptoportfolioapp.cryptopriceservice.dto.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * @author Karol Kuta-Orlowicz
+ */
 @Data
 @Accessors(chain = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CryptocurrencyResponseDTO {
+public class CryptocurrencyMapDTO {
 
     @JsonProperty("name")
     private String name;
@@ -22,10 +22,4 @@ public class CryptocurrencyResponseDTO {
     @JsonProperty("id")
     private Long coinMarketId;
 
-    @JsonProperty("quote")
-    private Map<String, PriceResponseDTO> quote = new HashMap<>();
-
-    public PriceResponseDTO getPriceResponseDTO() {
-        return this.getQuote().get("USD");
-    }
 }
