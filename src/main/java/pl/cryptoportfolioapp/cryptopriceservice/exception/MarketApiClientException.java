@@ -1,6 +1,5 @@
 package pl.cryptoportfolioapp.cryptopriceservice.exception;
 
-import lombok.Data;
 import org.springframework.http.HttpStatus;
 
 /**

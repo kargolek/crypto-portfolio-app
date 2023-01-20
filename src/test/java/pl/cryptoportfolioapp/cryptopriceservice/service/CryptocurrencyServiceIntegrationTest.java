@@ -183,11 +183,6 @@ public class CryptocurrencyServiceIntegrationTest extends MySqlTestContainer {
         assertThatThrownBy(() -> underTestService.addCryptocurrency(cryptocurrency))
                 .isInstanceOf(MarketApiClientException.class)
                 .hasMessageContaining("serverMessage: An internal server error occurred");
-
-        cryptocurrencyRepository.findAll().stream()
-                .peek(cryptocurrency1 -> {
-                    System.out.println(cryptocurrency1.getName());
-                });
     }
 
     @Test
