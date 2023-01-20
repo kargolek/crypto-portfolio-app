@@ -14,6 +14,4 @@ public class QuotesDataDTO {
     @JsonProperty("data")
     private Map<String, CryptocurrencyQuoteDTO> data = new HashMap<>();
 
-    @JsonProperty("status")
-    private ServerStatusDTO status;
 }
