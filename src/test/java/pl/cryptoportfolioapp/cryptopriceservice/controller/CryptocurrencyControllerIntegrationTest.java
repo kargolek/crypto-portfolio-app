@@ -851,4 +851,273 @@ public class CryptocurrencyControllerIntegrationTest {
                 .anyMatch(error -> error.equalsIgnoreCase("Symbol cannot be an empty"))
                 .anyMatch(error -> error.equalsIgnoreCase("Symbol length exceeds range [2,20]"));
     }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPostCryptocurrencyDuplicateName_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(BTC_NAME)
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(10909L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Duplicate entry 'Bitcoin' for key 'cryptocurrency.UniqueName'"
+        );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPostCryptocurrencyDuplicateSymbol_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW_NAME")
+                .setSymbol(BTC_SYMBOL)
+                .setCoinMarketId(109L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Duplicate entry 'BTC' for key 'cryptocurrency.UniqueSymbol'"
+        );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPostCryptocurrencyDuplicateMarketID_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW_NAME")
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(1L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Duplicate entry '1' for key 'cryptocurrency.UniqueCoinMarketCapId'"
+        );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPutCryptocurrency_thenReturnStatus200AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW_NAME")
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(100L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/" + bitcoinID,
+                HttpMethod.PUT,
+                entity,
+                Cryptocurrency.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+
+        var cryptocurrency = responseEntity.getBody();
+
+        assertThat(cryptocurrency).extracting(
+                Cryptocurrency::getId,
+                Cryptocurrency::getName,
+                Cryptocurrency::getSymbol,
+                Cryptocurrency::getCoinMarketId
+        ).containsExactly(
+                bitcoinID,
+                "NEW_NAME",
+                "NEW_SYMBOL",
+                100L
+        );
+
+        assertThat(requireNonNull(cryptocurrency).getLastUpdate())
+                .isBefore(LocalDateTime.now());
+
+        assertThat(requireNonNull(cryptocurrency).getPrice()).extracting(
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                BTC_PRICE,
+                BTC_PERCENT_1H,
+                BTC_PERCENT_24H,
+                BTC_PERCENT_7D,
+                BTC_PERCENT_30D,
+                BTC_PERCENT_60D,
+                BTC_PERCENT_90D
+        );
+
+        assertThat(cryptocurrency.getPrice().getId())
+                .isGreaterThan(0L);
+
+        assertThat(cryptocurrency.getPrice().getLastUpdate())
+                .isBefore(LocalDateTime.now());
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPutCryptocurrencyNotExistID_thenReturnStatus404AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW_NAME")
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(100L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/123456",
+                HttpMethod.PUT,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.NOT_FOUND);
+
+        assertThat(responseEntity.getBody())
+                .extracting(
+                        JsonApiError::getStatus,
+                        JsonApiError::getMessage
+                ).containsExactly(
+                        HttpStatus.NOT_FOUND,
+                        "Unable to find cryptocurrency with id: 123456"
+                );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPutCryptocurrencyNoUniqueName_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(ETH_NAME)
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(100L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/" + bitcoinID,
+                HttpMethod.PUT,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody())
+                .extracting(
+                        JsonApiError::getStatus,
+                        JsonApiError::getMessage
+                ).containsExactly(
+                        HttpStatus.BAD_REQUEST,
+                        "Duplicate entry 'Ethereum' for key 'cryptocurrency.UniqueName'"
+                );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPutCryptocurrencyNoUniqueSymbol_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW NAME")
+                .setSymbol(ETH_SYMBOL)
+                .setCoinMarketId(100L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/" + bitcoinID,
+                HttpMethod.PUT,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody())
+                .extracting(
+                        JsonApiError::getStatus,
+                        JsonApiError::getMessage
+                ).containsExactly(
+                        HttpStatus.BAD_REQUEST,
+                        "Duplicate entry 'ETH' for key 'cryptocurrency.UniqueSymbol'"
+                );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPutCryptocurrencyNoUniqueMarketID_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("NEW NAME")
+                .setSymbol("NEW_SYMBOL")
+                .setCoinMarketId(ETH_MARKET_ID);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/" + bitcoinID,
+                HttpMethod.PUT,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody())
+                .extracting(
+                        JsonApiError::getStatus,
+                        JsonApiError::getMessage
+                ).containsExactly(
+                        HttpStatus.BAD_REQUEST,
+                        "Duplicate entry '1027' for key 'cryptocurrency.UniqueCoinMarketCapId'"
+                );
+    }
 }
