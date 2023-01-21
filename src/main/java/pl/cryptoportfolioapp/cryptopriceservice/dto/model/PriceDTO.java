@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import pl.cryptoportfolioapp.cryptopriceservice.dto.model.CryptocurrencyDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @author Karol Kuta-Orlowicz
@@ -21,6 +22,7 @@ public class PriceDTO {
     private BigDecimal percentChange30d;
     private BigDecimal percentChange60d;
     private BigDecimal percentChange90d;
+    private LocalDateTime lastUpdate;
     @JsonIgnore
     private CryptocurrencyDTO cryptocurrencyDTO;
 }
