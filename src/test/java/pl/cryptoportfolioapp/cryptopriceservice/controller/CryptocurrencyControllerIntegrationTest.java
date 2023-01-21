@@ -1,5 +1,10 @@
 package pl.cryptoportfolioapp.cryptopriceservice.controller;
 
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -7,11 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import pl.cryptoportfolioapp.cryptopriceservice.dto.controller.CryptocurrencyPostDTO;
 import pl.cryptoportfolioapp.cryptopriceservice.exception.JsonApiError;
 import pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerExtension;
 import pl.cryptoportfolioapp.cryptopriceservice.extension.MySqlTestContainerExtension;
@@ -22,6 +28,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyReposit
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import static java.util.Arrays.stream;
@@ -61,6 +68,9 @@ public class CryptocurrencyControllerIntegrationTest {
     private static final BigDecimal ETH_PERCENT_30D = new BigDecimal("-6.0").setScale(12, RoundingMode.HALF_UP);
     private static final BigDecimal ETH_PERCENT_60D = new BigDecimal("6.5").setScale(12, RoundingMode.HALF_UP);
     private static final BigDecimal ETH_PERCENT_90D = new BigDecimal("-7.0").setScale(12, RoundingMode.HALF_UP);
+    private static final String POLYGON_NAME = "Polygon";
+    private static final String POLYGON_SYMBOL = "MATIC";
+    private static final long POLYGON_MARKET_ID = 3890L;
     @Autowired
     private TestRestTemplate template;
 
@@ -75,9 +85,70 @@ public class CryptocurrencyControllerIntegrationTest {
         registry.add("api.coin.market.cap.baseUrl", () -> mockWebServer.url("/").toString());
     }
 
+    @BeforeAll
+    public static void setupBeforeAll() {
+        String bodyQuote400 = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-21T21:35:59.813Z",
+                        "error_code": 400,
+                        "error_message": "\\"id\\" should only include comma-separated numeric CoinMarketCap cryptocurrency ids",
+                        "elapsed": 0,
+                        "credit_count": 0
+                    }
+                }
+                """;
+
+        String bodyMaticId = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-21T19:44:52.202Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 17,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": [
+                        {
+                            "id": 3890,
+                            "name": "Polygon",
+                            "symbol": "MATIC",
+                            "slug": "polygon",
+                            "rank": 11,
+                            "displayTV": 1,
+                            "manualSetTV": 0,
+                            "tvCoinSymbol": "",
+                            "is_active": 1,
+                            "first_historical_data": "2019-04-28T20:04:10.000Z",
+                            "last_historical_data": "2023-01-21T19:39:00.000Z",
+                            "platform": null
+                        }
+                    ]
+                }
+                """;
+        final Dispatcher dispatcher = new Dispatcher() {
+            @NotNull
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                return switch (requireNonNull(request.getPath())) {
+                    case "/v2/cryptocurrency/quotes/latest?id=1,1027" -> new MockResponse()
+                            .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .setResponseCode(400)
+                            .setBody(bodyQuote400);
+                    case "/v1/cryptocurrency/map?symbol=MATIC" -> new MockResponse()
+                            .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .setResponseCode(200)
+                            .setBody(bodyMaticId);
+                    default -> new MockResponse().setResponseCode(404);
+                };
+            }
+        };
+        mockWebServer.setDispatcher(dispatcher);
+    }
+
     @BeforeEach
     public void setup() {
-
         var cryptos = cryptocurrencyRepository.findAll();
 
         bitcoinID = cryptos.stream()
@@ -509,5 +580,275 @@ public class CryptocurrencyControllerIntegrationTest {
                 HttpStatus.NOT_FOUND,
                 "Unable to find cryptocurrency with id: 1234567890"
         );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenDeleteCryptoByID_thenReturnStatus200() {
+        HttpEntity<String> entity = new HttpEntity<>(null, new HttpHeaders());
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/" + bitcoinID,
+                HttpMethod.DELETE,
+                entity,
+                String.class);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenDeleteCryptoByNoExistID_thenReturnStatus404() {
+        HttpEntity<String> entity = new HttpEntity<>(null, new HttpHeaders());
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/1234567",
+                HttpMethod.DELETE,
+                entity,
+                String.class);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @Sql({"/delete_data.sql", "/insert_data.sql"})
+    void whenPostCryptocurrencyNameSymbolMarketID_thenReturnStatus200AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(POLYGON_NAME)
+                .setSymbol(POLYGON_SYMBOL)
+                .setCoinMarketId(POLYGON_MARKET_ID);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                Cryptocurrency.class);
+
+        var crypto = Objects.requireNonNull(responseEntity.getBody());
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        assertThat(crypto).extracting(
+                Cryptocurrency::getId,
+                Cryptocurrency::getName,
+                Cryptocurrency::getSymbol,
+                Cryptocurrency::getCoinMarketId
+        ).containsExactly(
+                (ethereumID + 1L),
+                POLYGON_NAME,
+                POLYGON_SYMBOL,
+                POLYGON_MARKET_ID
+        );
+
+        assertThat(crypto.getLastUpdate())
+                .isBefore(LocalDateTime.now());
+
+        assertThat(crypto.getPrice()).extracting(
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThat(crypto.getPrice().getId())
+                .isGreaterThan(0L);
+
+        assertThat(crypto.getPrice().getLastUpdate())
+                .isBefore(LocalDateTime.now());
+
+    }
+
+    @Test
+    @Sql({"/delete_data.sql"})
+    void whenPostCryptocurrencyNameSymbol_thenReturnStatus200AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(POLYGON_NAME)
+                .setSymbol(POLYGON_SYMBOL);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                Cryptocurrency.class);
+
+        var crypto = Objects.requireNonNull(responseEntity.getBody());
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.CREATED);
+
+        assertThat(crypto.getId())
+                .isGreaterThan(0L);
+
+        assertThat(crypto).extracting(
+                Cryptocurrency::getName,
+                Cryptocurrency::getSymbol,
+                Cryptocurrency::getCoinMarketId
+        ).containsExactly(
+                POLYGON_NAME,
+                POLYGON_SYMBOL,
+                POLYGON_MARKET_ID
+        );
+
+        assertThat(crypto.getLastUpdate())
+                .isBefore(LocalDateTime.now());
+
+        assertThat(crypto.getPrice()).extracting(
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThat(crypto.getPrice().getId())
+                .isGreaterThan(0L);
+
+        assertThat(crypto.getPrice().getLastUpdate())
+                .isBefore(LocalDateTime.now());
+    }
+
+    @Test
+    @Sql({"/delete_data.sql"})
+    void whenPostCryptocurrencyTooShortName_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("a")
+                .setSymbol(POLYGON_SYMBOL);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage,
+                JsonApiError::getErrors
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Method argument are not valid",
+                List.of("Name length exceeds range [2,100]")
+        );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql"})
+    void whenPostCryptocurrencyTooShortSymbol_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(POLYGON_NAME)
+                .setSymbol("a");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Method argument are not valid"
+        );
+    }
+
+    @Test
+    @Sql({"/delete_data.sql"})
+    void whenPostCryptocurrencyEmptyName_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName("")
+                .setSymbol(POLYGON_NAME);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Method argument are not valid"
+        );
+
+        assertThat(requireNonNull(responseEntity.getBody()).getErrors())
+                .anyMatch(error -> error.equalsIgnoreCase("Name cannot be an empty"))
+                .anyMatch(error -> error.equalsIgnoreCase("Name length exceeds range [2,100]"));
+    }
+
+    @Test
+    @Sql({"/delete_data.sql"})
+    void whenPostCryptocurrencyEmptySymbol_thenReturnStatus400AndBody() {
+        var body = new CryptocurrencyPostDTO()
+                .setName(POLYGON_NAME)
+                .setSymbol("");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CryptocurrencyPostDTO> entity = new HttpEntity<>(body, headers);
+        var responseEntity = template.exchange("/api/v1/cryptocurrency/",
+                HttpMethod.POST,
+                entity,
+                JsonApiError.class);
+
+        assertThat(responseEntity.getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(responseEntity.getBody()).extracting(
+                JsonApiError::getStatus,
+                JsonApiError::getMessage
+        ).containsExactly(
+                HttpStatus.BAD_REQUEST,
+                "Method argument are not valid"
+        );
+
+        assertThat(requireNonNull(responseEntity.getBody()).getErrors())
+                .anyMatch(error -> error.equalsIgnoreCase("Symbol cannot be an empty"))
+                .anyMatch(error -> error.equalsIgnoreCase("Symbol length exceeds range [2,20]"));
     }
 }
