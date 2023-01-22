@@ -3,11 +3,9 @@ description: File a bug report
 title: "[Bug]: "
 body:
   - type: markdown
-    id: bug-summary
+    id: bug-details
     attributes:
-      value: "**[Bug summary]**"
-    validations:
-      required: true
+      value: "# **[Bug Details]** "
   - type: dropdown
     id: severity
     attributes:
@@ -19,6 +17,8 @@ body:
         - Major
         - Minor
         - Trivial
+    validations:
+      required: true
   - type: dropdown
     id: bug_category
     attributes:
@@ -50,11 +50,19 @@ body:
     validations:
       required: true
   - type: markdown
-    id: bug-summary
+    id: bug-description
     attributes:
-      value: "**[Bug details]**"
+      value: "# **[Bug Description]**"
     validations:
-        required: true
+      required: true
+  - type: textarea
+    id: summary-text
+    attributes:
+      label: Summary
+      description: Provide clearly summary of the bug
+      value: "1. "
+    validations:
+      required: true
   - type: textarea
     id: reproduction-steps
     attributes:
@@ -83,11 +91,11 @@ body:
     id: code-affected
     attributes:
       label: Code affected
-      description: Please copy and paste java code.
+      description: Please copy and paste java code. This will be automatically formatted into java code, so no need for backticks
       render: java
   - type: textarea
     id: logs
     attributes:
       label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      description: Please copy and paste any relevant log output. This will be automatically formatted into shell code, so no need for backticks.
       render: shell
