@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
+
 @Data
 @Accessors(chain = true)
 public class CryptocurrencyDTO {
@@ -11,6 +13,7 @@ public class CryptocurrencyDTO {
     private String name;
     private String symbol;
     private Long coinMarketId;
+    private LocalDateTime lastUpdate;
 
     @JsonProperty("price")
     private PriceDTO priceDTO;
