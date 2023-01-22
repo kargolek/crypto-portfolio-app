@@ -17,7 +17,7 @@ public class ScheduledPriceUpdateTask {
     @Autowired
     private PriceUpdateService priceUpdateService;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void scheduledUpdatePriceJob() {
         log.info("Running scheduled update price job");
         priceUpdateService.updateCryptocurrencyPrices();
