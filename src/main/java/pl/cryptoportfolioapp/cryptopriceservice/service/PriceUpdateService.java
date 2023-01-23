@@ -35,20 +35,20 @@ public class PriceUpdateService {
         var cryptocurrencies = cryptocurrencyService.getCryptocurrencies();
         if (cryptocurrencies.isEmpty())
             return Collections.emptyList();
-        var cryptocurrenciesDto = cryptocurrencies.stream()
+        var cryptocurrencyDTOS = cryptocurrencies.stream()
                 .map((Cryptocurrency cryptocurrency) ->
                         CryptocurrencyMapper.INSTANCE.mapEntityToCryptocurrencyDto(cryptocurrency,
                                 new CycleAvoidingMappingContext()))
                 .toList();
 
-        var ids = createCryptocurrenciesIds(cryptocurrenciesDto);
+        var ids = createCryptocurrenciesIds(cryptocurrencyDTOS);
 
-        var responseDTOS = marketApiClientService.getLatestPriceByIds(ids)
+        var cryptocurrencyQuoteDTOS = marketApiClientService.getLatestPriceByIds(ids)
                 .orElseThrow()
                 .getData()
                 .values();
 
-        var prices = updateDtoByNewPrice(cryptocurrenciesDto, responseDTOS)
+        var prices = updateDtoByNewPrice(cryptocurrencyDTOS, cryptocurrencyQuoteDTOS)
                 .stream()
                 .map(CryptocurrencyMapper.INSTANCE::mapDtoToCryptocurrencyEntity)
                 .map(Cryptocurrency::getPrice)
@@ -59,20 +59,23 @@ public class PriceUpdateService {
     }
 
     private List<CryptocurrencyDTO> updateDtoByNewPrice(List<CryptocurrencyDTO> cryptocurrencyDTOS,
-                                                        Collection<CryptocurrencyQuoteDTO> responseDTOS) {
+                                                        Collection<CryptocurrencyQuoteDTO> cryptocurrencyQuoteDTOS) {
         return cryptocurrencyDTOS.stream()
                 .<CryptocurrencyDTO>mapMulti((cryptocurrencyDTO, consumer) -> {
-                    responseDTOS.stream()
-                            .filter(cryptocurrencyResponseDTO -> cryptocurrencyResponseDTO.getCoinMarketId().equals(cryptocurrencyDTO.getCoinMarketId()))
+                    cryptocurrencyQuoteDTOS.stream()
+                            .filter(cryptocurrencyQuoteDTO -> cryptocurrencyQuoteDTO.getCoinMarketId() != null)
+                            .filter(cryptocurrencyQuoteDTO ->
+                                    cryptocurrencyQuoteDTO.getCoinMarketId().equals(cryptocurrencyDTO.getCoinMarketId()))
                             .findFirst()
-                            .ifPresent(cryptocurrencyResponseDTO -> CryptocurrencyMapper.INSTANCE.updateDtoByCryptocurrencyQuoteDto(cryptocurrencyDTO, cryptocurrencyResponseDTO));
+                            .ifPresent(cryptocurrencyQuoteDTO ->
+                                    CryptocurrencyMapper.INSTANCE.updateDtoByCryptocurrencyQuoteDto(cryptocurrencyDTO, cryptocurrencyQuoteDTO));
                     consumer.accept(cryptocurrencyDTO);
                 })
                 .collect(Collectors.toList());
     }
 
-    private String createCryptocurrenciesIds(List<CryptocurrencyDTO> cryptocurrencies) {
-        return cryptocurrencies
+    private String createCryptocurrenciesIds(List<CryptocurrencyDTO> cryptocurrencyDTOS) {
+        return cryptocurrencyDTOS
                 .stream()
                 .map(CryptocurrencyDTO::getCoinMarketId)
                 .map(String::valueOf)
