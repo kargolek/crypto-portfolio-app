@@ -18,12 +18,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -104,9 +102,9 @@ class PriceUpdateServiceUnitTest {
                 .setPercentChange1h(new BigDecimal("5.0").setScale(12, RoundingMode.HALF_UP))
                 .setPercentChange24h(new BigDecimal("7.5").setScale(12, RoundingMode.HALF_UP));
         priceQuoteDtoETH = new PriceQuoteDTO()
-                .setPriceCurrent(new BigDecimal("2000.5"))
-                .setPercentChange1h(new BigDecimal("25.5"))
-                .setPercentChange24h(new BigDecimal("40.5"));
+                .setPriceCurrent(new BigDecimal("2000.5").setScale(12, RoundingMode.HALF_UP))
+                .setPercentChange1h(new BigDecimal("25.5").setScale(12, RoundingMode.HALF_UP))
+                .setPercentChange24h(new BigDecimal("40.5").setScale(12, RoundingMode.HALF_UP));
 
         cryptoQuoteDtoBTC = new CryptocurrencyQuoteDTO()
                 .setName(btcName)
@@ -145,13 +143,13 @@ class PriceUpdateServiceUnitTest {
                         Price::getPercentChange1h,
                         Price::getPercentChange24h
                 ).containsExactly(
-                        Tuple.tuple(
+                        tuple(
                                 priceBTC.getId(),
                                 priceQuoteDtoBTC.getPriceCurrent(),
                                 priceQuoteDtoBTC.getPercentChange1h(),
                                 priceQuoteDtoBTC.getPercentChange24h()
                         ),
-                        Tuple.tuple(
+                        tuple(
                                 priceETH.getId(),
                                 priceQuoteDtoETH.getPriceCurrent(),
                                 priceQuoteDtoETH.getPercentChange1h(),
@@ -206,13 +204,57 @@ class PriceUpdateServiceUnitTest {
                         Price::getPercentChange1h,
                         Price::getPercentChange24h
                 ).containsExactly(
-                        Tuple.tuple(
+                        tuple(
                                 priceBTC.getId(),
                                 priceBTC.getPriceCurrent(),
                                 priceBTC.getPercentChange1h(),
                                 priceBTC.getPercentChange24h()
                         ),
-                        Tuple.tuple(
+                        tuple(
+                                priceETH.getId(),
+                                priceETH.getPriceCurrent(),
+                                priceETH.getPercentChange1h(),
+                                priceETH.getPercentChange24h()
+                        )
+                );
+    }
+
+    @Test
+    void whenPriceQuoteDTOSFieldsAreNull_thenReturnPreviousPrices() {
+        when(cryptocurrencyService.getCryptocurrencies())
+                .thenReturn(cryptocurrencyEntities);
+
+        cryptoQuoteDtoBTC.setQuote(new HashMap<>());
+        cryptoQuoteDtoETH.setQuote(new HashMap<>());
+
+        quotesDataDTO = new QuotesDataDTO()
+                .setData(Map.of("1", cryptoQuoteDtoBTC, "1027", cryptoQuoteDtoETH));
+
+        when(marketApiClientService.getLatestPriceByIds(any()))
+                .thenReturn(Optional.of(quotesDataDTO));
+
+        var priceEntities = cryptocurrencyEntities.stream()
+                .map(Cryptocurrency::getPrice)
+                .toList();
+        when(priceService.updatePrices(any()))
+                .thenReturn(priceEntities);
+
+        var expected = underTest.updateCryptocurrencyPrices();
+
+        assertThat(expected)
+                .extracting(
+                        Price::getId,
+                        Price::getPriceCurrent,
+                        Price::getPercentChange1h,
+                        Price::getPercentChange24h
+                ).containsExactly(
+                        tuple(
+                                priceBTC.getId(),
+                                priceBTC.getPriceCurrent(),
+                                priceBTC.getPercentChange1h(),
+                                priceBTC.getPercentChange24h()
+                        ),
+                        tuple(
                                 priceETH.getId(),
                                 priceETH.getPriceCurrent(),
                                 priceETH.getPercentChange1h(),

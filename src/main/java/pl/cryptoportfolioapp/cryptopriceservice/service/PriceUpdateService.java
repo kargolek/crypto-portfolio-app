@@ -52,7 +52,7 @@ public class PriceUpdateService {
                 .stream()
                 .map(CryptocurrencyMapper.INSTANCE::mapDtoToCryptocurrencyEntity)
                 .map(Cryptocurrency::getPrice)
-                .filter(price -> price.getPriceCurrent() != null)
+                .filter(price -> price != null && price.getPriceCurrent() != null)
                 .toList();
         priceService.updatePrices(prices);
         return prices;

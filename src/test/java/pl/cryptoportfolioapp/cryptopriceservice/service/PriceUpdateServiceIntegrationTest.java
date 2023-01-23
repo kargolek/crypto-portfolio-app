@@ -63,8 +63,6 @@ class PriceUpdateServiceIntegrationTest {
 
     @Autowired
     private CryptocurrencyRepository cryptocurrencyRepository;
-    private Cryptocurrency cryptocurrencyBTC;
-    private Cryptocurrency cryptocurrencyETH;
     private Price priceBTC;
     private Price priceETH;
 
@@ -87,7 +85,7 @@ class PriceUpdateServiceIntegrationTest {
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        cryptocurrencyBTC = Cryptocurrency.builder()
+        Cryptocurrency cryptocurrencyBTC = Cryptocurrency.builder()
                 .name("Bitcoin")
                 .symbol("BTC")
                 .coinMarketId(1L)
@@ -107,7 +105,7 @@ class PriceUpdateServiceIntegrationTest {
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        cryptocurrencyETH = Cryptocurrency.builder()
+        Cryptocurrency cryptocurrencyETH = Cryptocurrency.builder()
                 .name("Ethereum")
                 .symbol("ETH")
                 .coinMarketId(1027L)
@@ -507,6 +505,105 @@ class PriceUpdateServiceIntegrationTest {
         var expected = underTest.updateCryptocurrencyPrices();
 
         assertThat(expected).extracting(
+                Price::getId,
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                tuple(
+                        priceBTC.getId(),
+                        priceBTC.getPriceCurrent(),
+                        priceBTC.getPercentChange1h(),
+                        priceBTC.getPercentChange24h(),
+                        priceBTC.getPercentChange7d(),
+                        priceBTC.getPercentChange30d(),
+                        priceBTC.getPercentChange60d(),
+                        priceBTC.getPercentChange90d()
+                ),
+                tuple(
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
+                )
+        );
+    }
+
+    @Test
+    void whenResponse200QuotaDataNull_thenNotUpdatePricesEntities() {
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-16T09:23:08.500Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 40,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": {
+                        "1": {
+                            "id": 1,
+                            "name": "Bitcoin",
+                            "symbol": "BTC",
+                            "slug": "bitcoin",
+                            "num_market_pairs": 9931,
+                            "date_added": "2013-04-28T00:00:00.000Z",
+                            "max_supply": 21000000,
+                            "circulating_supply": 19263793,
+                            "total_supply": 19263793,
+                            "is_active": 1,
+                            "platform": null,
+                            "cmc_rank": 1,
+                            "is_fiat": 0,
+                            "self_reported_circulating_supply": null,
+                            "self_reported_market_cap": null,
+                            "tvl_ratio": null,
+                            "last_updated": "2023-01-16T09:21:00.000Z"
+                        },
+                        "1027": {
+                                    "id": 1027,
+                                    "name": "Ethereum",
+                                    "symbol": "ETH",
+                                    "slug": "ethereum",
+                                    "num_market_pairs": 6360,
+                                    "date_added": "2015-08-07T00:00:00.000Z",
+                                    "max_supply": null,
+                                    "circulating_supply": 122373866.2178,
+                                    "total_supply": 122373866.2178,
+                                    "is_active": 1,
+                                    "platform": null,
+                                    "cmc_rank": 2,
+                                    "is_fiat": 0,
+                                    "self_reported_circulating_supply": null,
+                                    "self_reported_market_cap": null,
+                                    "tvl_ratio": null,
+                                    "last_updated": "2023-01-16T09:35:00.000Z"
+                                }
+                    }
+                }
+                """;
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        var expected = underTest.updateCryptocurrencyPrices();
+
+        assertThat(expected).hasSize(2);
+
+        assertThat(cryptocurrencyRepository.findAll()
+                .stream().map(Cryptocurrency::getPrice).toList()).extracting(
                 Price::getId,
                 Price::getPriceCurrent,
                 Price::getPercentChange1h,
