@@ -15,7 +15,6 @@ public class MySqlTestContainerExtension implements BeforeAllCallback {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
-        //mySQLContainer.withReuse(true);
         mySQLContainer.start();
         System.setProperty("spring.datasource.url", mySQLContainer.getJdbcUrl());
         System.setProperty("spring.datasource.username", mySQLContainer.getUsername());
