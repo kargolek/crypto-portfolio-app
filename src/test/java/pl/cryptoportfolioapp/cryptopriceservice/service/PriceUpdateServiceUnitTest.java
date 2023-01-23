@@ -1,6 +1,5 @@
 package pl.cryptoportfolioapp.cryptopriceservice.service;
 
-import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
