@@ -21,6 +21,7 @@ import pl.cryptoportfolioapp.cryptopriceservice.model.Price;
 import pl.cryptoportfolioapp.cryptopriceservice.repository.CryptocurrencyRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
@@ -40,6 +41,20 @@ import static pl.cryptoportfolioapp.cryptopriceservice.extension.MockWebServerEx
 @Tag("IntegrationTest")
 class PriceUpdateServiceIntegrationTest {
 
+    private static final BigDecimal BTC_RES_PRICE = new BigDecimal("25000.12345").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_1H = new BigDecimal("1.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_24H = new BigDecimal("-2.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_7D = new BigDecimal("3.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_30D = new BigDecimal("-4.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_60D = new BigDecimal("5.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal BTC_RES_PERCENT_90D = new BigDecimal("-6.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_RES_PRICE = new BigDecimal("2543.304022840702").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_1H = new BigDecimal("7.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_24H = new BigDecimal("-8.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_7D = new BigDecimal("9.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_30D = new BigDecimal("-10.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_60D = new BigDecimal("11.54321").setScale(12, RoundingMode.HALF_UP);
+    private static final BigDecimal ETH_PERCENT_90D = new BigDecimal("-12.54321").setScale(12, RoundingMode.HALF_UP);
     @Autowired
     private PriceUpdateService underTest;
 
@@ -48,8 +63,8 @@ class PriceUpdateServiceIntegrationTest {
 
     @Autowired
     private CryptocurrencyRepository cryptocurrencyRepository;
-    private Cryptocurrency btc;
-    private Cryptocurrency eth;
+    private Price priceBTC;
+    private Price priceETH;
 
     @DynamicPropertySource
     static void registerProperty(DynamicPropertyRegistry registry) {
@@ -59,36 +74,48 @@ class PriceUpdateServiceIntegrationTest {
     @BeforeEach
     void setUp() {
 
-        var priceBtc = Price.builder()
-                .id(1L)
+        priceBTC = Price.builder()
+                .priceCurrent(new BigDecimal("20000.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange1h(new BigDecimal("0.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange24h(new BigDecimal("1.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange7d(new BigDecimal("2.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange30d(new BigDecimal("3.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange60d(new BigDecimal("4.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange90d(new BigDecimal("5.5").setScale(12, RoundingMode.HALF_UP))
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        btc = Cryptocurrency.builder()
-                .id(1L)
+        Cryptocurrency cryptocurrencyBTC = Cryptocurrency.builder()
                 .name("Bitcoin")
                 .symbol("BTC")
                 .coinMarketId(1L)
-                .price(priceBtc)
+                .price(priceBTC)
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        priceBtc.setCryptocurrency(btc);
+        priceBTC.setCryptocurrency(cryptocurrencyBTC);
 
-        var priceEth = Price.builder()
-                .id(2L)
+        priceETH = Price.builder()
+                .priceCurrent(new BigDecimal("1800.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange1h(new BigDecimal("0.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange24h(new BigDecimal("1.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange7d(new BigDecimal("2.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange30d(new BigDecimal("3.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange60d(new BigDecimal("4.5").setScale(12, RoundingMode.HALF_UP))
+                .percentChange90d(new BigDecimal("5.5").setScale(12, RoundingMode.HALF_UP))
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
-        eth = Cryptocurrency.builder()
-                .id(2L)
+        Cryptocurrency cryptocurrencyETH = Cryptocurrency.builder()
                 .name("Ethereum")
                 .symbol("ETH")
                 .coinMarketId(1027L)
-                .price(priceEth)
+                .price(priceETH)
                 .lastUpdate(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-        priceEth.setCryptocurrency(eth);
+        priceETH.setCryptocurrency(cryptocurrencyETH);
 
+        cryptocurrencyRepository.save(cryptocurrencyBTC);
+        cryptocurrencyRepository.save(cryptocurrencyETH);
     }
 
     @AfterEach
@@ -98,9 +125,6 @@ class PriceUpdateServiceIntegrationTest {
 
     @Test
     void whenReceiveOneCryptoPriceUpdate_thenPricesShouldBeUpdatedForOneEntity() {
-        cryptocurrencyRepository.save(btc);
-        cryptocurrencyRepository.save(eth);
-
         var bodyRes = """
                 {
                 "data": {
@@ -126,13 +150,15 @@ class PriceUpdateServiceIntegrationTest {
                 "self_reported_market_cap": null,
                 "quote": {
                 "USD": {
-                "price": 6602.60701122,
+                "price": 25000.12345,
                 "volume_24h": 4314444687.5194,
                 "volume_change_24h": -0.152774,
-                "percent_change_1h": 0.988615,
-                "percent_change_24h": 4.37185,
-                "percent_change_7d": -12.1352,
-                "percent_change_30d": -12.1352,
+                "percent_change_1h": 1.54321,
+                "percent_change_24h": -2.54321,
+                "percent_change_7d": 3.54321,
+                "percent_change_30d": -4.54321,
+                "percent_change_60d": 5.54321,
+                "percent_change_90d": -6.54321,
                 "market_cap": 852164659250.2758,
                 "market_cap_dominance": 51,
                 "fully_diluted_market_cap": 952835089431.14,
@@ -160,28 +186,41 @@ class PriceUpdateServiceIntegrationTest {
 
         assertThat(cryptocurrencyRepository.findAll()
                 .stream().map(Cryptocurrency::getPrice).toList()).extracting(
+                Price::getId,
                 Price::getPriceCurrent,
                 Price::getPercentChange1h,
-                Price::getPercentChange24h
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
         ).containsExactly(
                 tuple(
-                        new BigDecimal("6602.607011220000"),
-                        new BigDecimal("0.988615000000"),
-                        new BigDecimal("4.371850000000")
+                        priceBTC.getId(),
+                        BTC_RES_PRICE,
+                        BTC_RES_PERCENT_1H,
+                        BTC_RES_PERCENT_24H,
+                        BTC_RES_PERCENT_7D,
+                        BTC_RES_PERCENT_30D,
+                        BTC_RES_PERCENT_60D,
+                        BTC_RES_PERCENT_90D
+
                 ),
                 tuple(
-                        null,
-                        null,
-                        null
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
                 )
         );
     }
 
     @Test
     void whenReceiveTwoCryptoPriceUpdate_thenPricesShouldBeUpdatedForTwoEntities() {
-        cryptocurrencyRepository.save(btc);
-        cryptocurrencyRepository.save(eth);
-
         var bodyRes = """
                 {
                     "status": {
@@ -213,15 +252,15 @@ class PriceUpdateServiceIntegrationTest {
                             "last_updated": "2023-01-16T09:21:00.000Z",
                             "quote": {
                                 "USD": {
-                                    "price": 20811.843148731245,
-                                    "volume_24h": 23379448071.008915,
-                                    "volume_change_24h": -13.9075,
-                                    "percent_change_1h": -0.13446372,
-                                    "percent_change_24h": 0.89816983,
-                                    "percent_change_7d": 20.92671809,
-                                    "percent_change_30d": 24.23402424,
-                                    "percent_change_60d": 25.6269808,
-                                    "percent_change_90d": 6.47186409,
+                                    "price": 25000.12345,
+                                    "volume_24h": 4314444687.5194,
+                                    "volume_change_24h": -0.152774,
+                                    "percent_change_1h": 1.54321,
+                                    "percent_change_24h": -2.54321,
+                                    "percent_change_7d": 3.54321,
+                                    "percent_change_30d": -4.54321,
+                                    "percent_change_60d": 5.54321,
+                                    "percent_change_90d": -6.54321,
                                     "market_cap": 400915038365.6269,
                                     "market_cap_dominance": 40.9945,
                                     "fully_diluted_market_cap": 437048706123.36,
@@ -250,15 +289,15 @@ class PriceUpdateServiceIntegrationTest {
                                     "last_updated": "2023-01-16T09:35:00.000Z",
                                     "quote": {
                                         "USD": {
-                                            "price": 1543.3040228407024,
+                                            "price": 2543.3040228407024,
                                             "volume_24h": 7685876434.055611,
                                             "volume_change_24h": -6.5169,
-                                            "percent_change_1h": 0.13288047,
-                                            "percent_change_24h": 1.15698649,
-                                            "percent_change_7d": 17.35844656,
-                                            "percent_change_30d": 30.80542595,
-                                            "percent_change_60d": 29.38690869,
-                                            "percent_change_90d": 16.63344566,
+                                            "percent_change_1h": 7.54321,
+                                            "percent_change_24h": -8.54321,
+                                            "percent_change_7d": 9.54321,
+                                            "percent_change_30d": -10.54321,
+                                            "percent_change_60d": 11.54321,
+                                            "percent_change_90d": -12.54321,
                                             "market_cap": 188860080024.50067,
                                             "market_cap_dominance": 19.2937,
                                             "fully_diluted_market_cap": 188860080024.5,
@@ -285,31 +324,40 @@ class PriceUpdateServiceIntegrationTest {
                 .toList();
 
         assertThat(prices).extracting(
+                Price::getId,
                 Price::getPriceCurrent,
                 Price::getPercentChange1h,
                 Price::getPercentChange24h,
-                Price::getPercentChange7d
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
         ).containsExactly(
                 tuple(
-                        new BigDecimal("20811.843148731245"),
-                        new BigDecimal("-0.134463720000"),
-                        new BigDecimal("0.898169830000"),
-                        new BigDecimal("20.926718090000")
+                        priceBTC.getId(),
+                        BTC_RES_PRICE,
+                        BTC_RES_PERCENT_1H,
+                        BTC_RES_PERCENT_24H,
+                        BTC_RES_PERCENT_7D,
+                        BTC_RES_PERCENT_30D,
+                        BTC_RES_PERCENT_60D,
+                        BTC_RES_PERCENT_90D
                 ),
                 tuple(
-                        new BigDecimal("1543.304022840702"),
-                        new BigDecimal("0.132880470000"),
-                        new BigDecimal("1.156986490000"),
-                        new BigDecimal("17.358446560000")
+                        priceETH.getId(),
+                        ETH_RES_PRICE,
+                        ETH_PERCENT_1H,
+                        ETH_PERCENT_24H,
+                        ETH_PERCENT_7D,
+                        ETH_PERCENT_30D,
+                        ETH_PERCENT_60D,
+                        ETH_PERCENT_90D
                 )
         );
     }
 
     @Test
     void whenReceiveNoCryptoPriceUpdate_thenPriceShouldNotBeUpdate() {
-        cryptocurrencyRepository.save(btc);
-        cryptocurrencyRepository.save(eth);
-
         var bodyRes = """
                 {
                     "status": {
@@ -333,31 +381,40 @@ class PriceUpdateServiceIntegrationTest {
 
         assertThat(cryptocurrencyRepository.findAll()
                 .stream().map(Cryptocurrency::getPrice).toList()).extracting(
+                Price::getId,
                 Price::getPriceCurrent,
                 Price::getPercentChange1h,
                 Price::getPercentChange24h,
-                Price::getPercentChange7d
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
         ).containsExactly(
                 tuple(
-                        null,
-                        null,
-                        null,
-                        null
+                        priceBTC.getId(),
+                        priceBTC.getPriceCurrent(),
+                        priceBTC.getPercentChange1h(),
+                        priceBTC.getPercentChange24h(),
+                        priceBTC.getPercentChange7d(),
+                        priceBTC.getPercentChange30d(),
+                        priceBTC.getPercentChange60d(),
+                        priceBTC.getPercentChange90d()
                 ),
                 tuple(
-                        null,
-                        null,
-                        null,
-                        null
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
                 )
         );
     }
 
     @Test
     void whenReceiveResponse500_thenPriceShouldNotBeUpdate() {
-        cryptocurrencyRepository.save(btc);
-        cryptocurrencyRepository.save(eth);
-
         var bodyRes = """
                 {
                 "status": {
@@ -381,30 +438,201 @@ class PriceUpdateServiceIntegrationTest {
 
         assertThat(cryptocurrencyRepository.findAll()
                 .stream().map(Cryptocurrency::getPrice).toList()).extracting(
+                Price::getId,
                 Price::getPriceCurrent,
                 Price::getPercentChange1h,
                 Price::getPercentChange24h,
-                Price::getPercentChange7d
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
         ).containsExactly(
                 tuple(
-                        null,
-                        null,
-                        null,
-                        null
+                        priceBTC.getId(),
+                        priceBTC.getPriceCurrent(),
+                        priceBTC.getPercentChange1h(),
+                        priceBTC.getPercentChange24h(),
+                        priceBTC.getPercentChange7d(),
+                        priceBTC.getPercentChange30d(),
+                        priceBTC.getPercentChange60d(),
+                        priceBTC.getPercentChange90d()
                 ),
                 tuple(
-                        null,
-                        null,
-                        null,
-                        null
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
                 )
         );
     }
 
     @Test
     void whenCryptocurrencyRepoEmpty_thenReturnEmptyList() {
+        cryptocurrencyRepository.deleteAll();
+        var expected = underTest.updateCryptocurrencyPrices();
+        assertThat(expected).hasSize(0);
+    }
+
+    @Test
+    void whenResponse200PriceDataNull_thenNotUpdatePricesEntities() {
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-22T19:04:55.091Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 97,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": {
+                        "1": {
+                        }
+                    }
+                }
+                """;
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
         var expected = underTest.updateCryptocurrencyPrices();
 
-        assertThat(expected).hasSize(0);
+        assertThat(expected).extracting(
+                Price::getId,
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                tuple(
+                        priceBTC.getId(),
+                        priceBTC.getPriceCurrent(),
+                        priceBTC.getPercentChange1h(),
+                        priceBTC.getPercentChange24h(),
+                        priceBTC.getPercentChange7d(),
+                        priceBTC.getPercentChange30d(),
+                        priceBTC.getPercentChange60d(),
+                        priceBTC.getPercentChange90d()
+                ),
+                tuple(
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
+                )
+        );
+    }
+
+    @Test
+    void whenResponse200QuotaDataNull_thenNotUpdatePricesEntities() {
+        var bodyRes = """
+                {
+                    "status": {
+                        "timestamp": "2023-01-16T09:23:08.500Z",
+                        "error_code": 0,
+                        "error_message": null,
+                        "elapsed": 40,
+                        "credit_count": 1,
+                        "notice": null
+                    },
+                    "data": {
+                        "1": {
+                            "id": 1,
+                            "name": "Bitcoin",
+                            "symbol": "BTC",
+                            "slug": "bitcoin",
+                            "num_market_pairs": 9931,
+                            "date_added": "2013-04-28T00:00:00.000Z",
+                            "max_supply": 21000000,
+                            "circulating_supply": 19263793,
+                            "total_supply": 19263793,
+                            "is_active": 1,
+                            "platform": null,
+                            "cmc_rank": 1,
+                            "is_fiat": 0,
+                            "self_reported_circulating_supply": null,
+                            "self_reported_market_cap": null,
+                            "tvl_ratio": null,
+                            "last_updated": "2023-01-16T09:21:00.000Z"
+                        },
+                        "1027": {
+                                    "id": 1027,
+                                    "name": "Ethereum",
+                                    "symbol": "ETH",
+                                    "slug": "ethereum",
+                                    "num_market_pairs": 6360,
+                                    "date_added": "2015-08-07T00:00:00.000Z",
+                                    "max_supply": null,
+                                    "circulating_supply": 122373866.2178,
+                                    "total_supply": 122373866.2178,
+                                    "is_active": 1,
+                                    "platform": null,
+                                    "cmc_rank": 2,
+                                    "is_fiat": 0,
+                                    "self_reported_circulating_supply": null,
+                                    "self_reported_market_cap": null,
+                                    "tvl_ratio": null,
+                                    "last_updated": "2023-01-16T09:35:00.000Z"
+                                }
+                    }
+                }
+                """;
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setBody(bodyRes)
+        );
+
+        var expected = underTest.updateCryptocurrencyPrices();
+
+        assertThat(expected).hasSize(2);
+
+        assertThat(cryptocurrencyRepository.findAll()
+                .stream().map(Cryptocurrency::getPrice).toList()).extracting(
+                Price::getId,
+                Price::getPriceCurrent,
+                Price::getPercentChange1h,
+                Price::getPercentChange24h,
+                Price::getPercentChange7d,
+                Price::getPercentChange30d,
+                Price::getPercentChange60d,
+                Price::getPercentChange90d
+        ).containsExactly(
+                tuple(
+                        priceBTC.getId(),
+                        priceBTC.getPriceCurrent(),
+                        priceBTC.getPercentChange1h(),
+                        priceBTC.getPercentChange24h(),
+                        priceBTC.getPercentChange7d(),
+                        priceBTC.getPercentChange30d(),
+                        priceBTC.getPercentChange60d(),
+                        priceBTC.getPercentChange90d()
+                ),
+                tuple(
+                        priceETH.getId(),
+                        priceETH.getPriceCurrent(),
+                        priceETH.getPercentChange1h(),
+                        priceETH.getPercentChange24h(),
+                        priceETH.getPercentChange7d(),
+                        priceETH.getPercentChange30d(),
+                        priceETH.getPercentChange60d(),
+                        priceETH.getPercentChange90d()
+                )
+        );
     }
 }
